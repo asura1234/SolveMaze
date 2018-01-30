@@ -9,6 +9,11 @@ namespace SolveMaze
     {
         private List<T> data;
 
+        public bool IsEmpty()
+        {
+            return data.Count == 0;
+        }
+
         public PriorityQueue()
         {
             this.data = new List<T>();
