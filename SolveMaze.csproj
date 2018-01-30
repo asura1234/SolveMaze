@@ -7,7 +7,7 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>SolveMaze</RootNamespace>
     <AssemblyName>SolveMaze</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>true</DebugSymbols>
@@ -30,10 +30,24 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Resources\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Engineering_Technical_Exercise_-_Maze.doc" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\maze1.png" />
+    <EmbeddedResource Include="Resources\maze2.png" />
+    <EmbeddedResource Include="Resources\maze3.png" />
+    <EmbeddedResource Include="Resources\maze0.png" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
