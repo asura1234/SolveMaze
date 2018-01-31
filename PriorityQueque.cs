@@ -9,6 +9,11 @@ namespace SolveMaze
     {
         private List<T> data;
 
+        public bool Contains(T obj)
+        {
+            return data.Contains(obj);
+        }
+
         public bool IsEmpty()
         {
             return data.Count == 0;
@@ -94,5 +99,3 @@ namespace SolveMaze
     } // PriorityQueue
 
 } // ns
-
-}
