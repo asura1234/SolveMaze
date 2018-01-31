@@ -8,121 +8,10 @@ namespace SolveMaze
     class MainClass
     {
         static Bitmap maze;
+        static Point start, goal;
+        static Graph<Point> graph;
 
-        public class Node : IComparable<Node>
-        {
-            public Point Point;
-            public double fScore;
-
-            public Node(Point pos, double score)
-            {
-                Point = pos;
-                fScore = score;
-            }
-
-            public int CompareTo(Node other)
-            {
-                if (this.fScore < other.fScore)
-                    return -1;
-                else if (this.fScore > other.fScore)
-                    return 1;
-                else
-                    return 0;
-            }
-
-            public bool Equals(Point other)
-            {
-                return Point.X == other.X && Point.Y == other.Y;
-            }
-        }
-
-        // based on the pseudocode provided on Wikipedia for A* search algorithm
-        // https://en.wikipedia.org/wiki/A*_search_algorithm#Pseudocode
-        static Point[] AStar(Point start, Point goal)
-        {
-            Dictionary<Point, Point> cameFrom = new Dictionary<Point, Point>();
-            Dictionary<Point, double> gScore = new Dictionary<Point, double>();
-            Dictionary<Point, double> fScore = new Dictionary<Point, double>();
-
-            for (int i = 0; i < maze.Width; i++)
-            {
-                for (int j = 0; j < maze.Height; j++)
-                {
-                    gScore.Add(new Point(i, j), double.PositiveInfinity);
-                    fScore.Add(new Point(i, j), double.PositiveInfinity);
-                }
-            }
-            gScore[start] = 0;
-
-            List<Point> closedSet = new List<Point>();
-            PriorityQueue<Node> openSet = new PriorityQueue<Node>();
-            openSet.Enqueue(new Node(start, fScore[start]));
-
-            while (!openSet.IsEmpty())
-            {
-                Point current = (openSet.Dequeue()).Point;
-                if (current.Equals(goal))
-                    return ReconstructPath(cameFrom, current);
-                closedSet.Add(current);
-
-                Point[] deltas = new Point[] { new Point(0, 1), new Point(0, -1), new Point(1, 0), new Point(-1, 0) };
-
-                foreach (Point d in deltas)
-                {
-                    int x = current.X + d.X;
-                    int y = current.Y + d.Y;
-                    Point neighbor = new Point(x, y);
-
-                    if (maze.GetPixel(x, y).ToArgb() == Color.Black.ToArgb())
-                        continue;
-
-                    if (closedSet.Contains(neighbor))
-                        continue;
-
-                    Node neighborNode = new Node(neighbor, fScore[neighbor]);
-                    if (!openSet.Contains(neighborNode))
-                        openSet.Enqueue(neighborNode);
-
-                    double tentative_gScore = gScore[current] + 1;
-                    if (tentative_gScore >= gScore[neighbor])
-                        continue;
-
-                    cameFrom[neighbor] = current;
-                    gScore[neighbor] = tentative_gScore;
-                    fScore[neighbor] = gScore[neighbor] + HeuristicCostEstimate(neighbor, goal);
-                }
-            }
-            return new Point[0];
-        }
-
-        static double DistanceBetween(Point a, Point b)
-        {
-            return Math.Sqrt((a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y));
-        }
-
-        static double HeuristicCostEstimate(Point current, Point goal)
-        {
-            return DistanceBetween(current, goal);
-        }
-
-        // based on the pseudocode provided on Wikipedia for A* search algorithm
-        // https://en.wikipedia.org/wiki/A*_search_algorithm#Pseudocode
-        static Point[] ReconstructPath(Dictionary<Point, Point> cameFrom, Point current)
-        {
-            List<Point> totalPath = new List<Point>();
-            totalPath.Add(current);
-
-            while (cameFrom.ContainsKey(current))
-            {
-                current = cameFrom[current];
-                totalPath.Add(current);
-            }
-            Point[] results = new Point[totalPath.Count - 2];
-            totalPath.CopyTo(1, results, 0, totalPath.Count -2);
-            return results;
-        }
-
-        static void FindStartNGoal(out Point start, out Point goal)
+        static void FindStartNGoal(out Point s, out Point g)
         {
             bool start_found = false, goal_found = false;
             for (int x = 0; x < maze.Width; x++)
@@ -132,12 +21,12 @@ namespace SolveMaze
                     Color c = maze.GetPixel(x, y);
                     if (c.ToArgb() == Color.Blue.ToArgb())
                     {
-                        goal = new Point(x, y);
+                        g = new Point(x, y);
                         goal_found = true;
                     }
                     else if (c.ToArgb() == Color.Red.ToArgb())
                     {
-                        start = new Point(x, y);
+                        s = new Point(x, y);
                         start_found = true;
                     }
 
@@ -147,25 +36,123 @@ namespace SolveMaze
             }
         }
 
+        public static void BuildGraph(Node<Point> start)
+        {
+            Point[] deltas = new Point[] { new Point(0, 1), new Point(0, -1), new Point(1, 0), new Point(-1, 0) };
+            List<Point> directions = new List<Point>();
+            foreach (Point d in deltas)
+            {
+                int x = start.Value.X + d.X;
+                int y = start.Value.Y + d.Y;
+
+                if (maze.GetPixel(x, y).ToArgb() != Color.Black.ToArgb())
+                    directions.Add(d);
+            }
+            foreach (Point d in directions)
+            {
+                bool hasntBeen = true;
+                foreach (Edge<Point> e in start.Edges)
+                {
+                    if (d == e.Value)
+                    {
+                        hasntBeen = false;
+                        break;
+                    }
+                }
+                if (hasntBeen)
+                {
+                    Point next = new Point(start.Value.X + d.X, start.Value.Y + d.Y);
+                    BuildGraphHelper(start, next, d, 1);
+                }
+            }
+        }
+
+        public static void BuildGraphHelper(Node<Point> lastNode, Point direction, Point current, int distance)
+        {
+            
+
+
+            if (maze.GetPixel(current.X, current.Y).ToArgb() == Color.Black.ToArgb())
+                return;
+            
+            Point[] deltas = new Point[] { new Point(0, 1), new Point(0, -1), new Point(1, 0), new Point(-1, 0) };
+            List<Point> directions = new List<Point>();
+            foreach (Point d in deltas)
+            {
+                int x = current.X + d.X;
+                int y = current.Y + d.Y;
+
+                if (maze.GetPixel(x, y).ToArgb() != Color.Black.ToArgb())
+                    directions.Add(d);
+            }
+            if (directions.Count > 1)
+            {
+                Node<Point> conectedNode = graph.Find(current);
+                if (conectedNode == null)
+                {
+                    Node<Point> newNode = new Node<Point>(current);
+                    graph.AddNode(newNode);
+                    graph.AddUndirectedEdge(lastNode, newNode, new Edge<Point>(direction, distance));
+
+                    foreach (Point d in directions)
+                    {
+                        Point next = new Point(current.X + d.X, current.Y + d.Y);
+                        BuildGraphHelper(newNode, d, next, 1);
+                    }
+                }
+                else if (!conectedNode.Equals(lastNode))
+                {
+                    graph.AddUndirectedEdge(lastNode, conectedNode, new Edge<Point>(direction, distance));
+                    foreach (Point d in directions)
+                    {
+                        bool hasntBeen = true;
+                        foreach (Edge<Point> e in conectedNode.Edges)
+                        {
+                            if (d == e.Value)
+                            {
+                                hasntBeen = false;
+                                break;
+                            }
+                        }
+
+                        if (hasntBeen)
+                        {
+                            Point next = new Point(current.X + d.X, current.Y + d.Y);
+                            BuildGraphHelper(conectedNode, d, next, 1);
+                        }
+                    }
+                }
+            }
+            else if (directions.Count == 1)
+            {
+                Point next = new Point(current.X + directions[0].X, current.Y + directions[0].Y);
+                BuildGraphHelper(lastNode, direction, next, distance++);
+            }
+        }
+
         public static void Main(string[] args)
         {
             string sourceName = args[0];
             string destinationName = args[1];
 
-            // load maze image from file
             maze = new Bitmap(sourceName);
-
-            // find the start and goal point
-            Point start, goal;
             FindStartNGoal(out start, out goal);
+            graph = new Graph<Point>();
 
-            // draw solution on the maze
-            Point[] path = AStar(start, goal);
-            Graphics graph = Graphics.FromImage(maze);
+            Node<Point> startNode = new Node<Point>(start);
+            Node<Point> goalNode = new Node<Point>(goal);
+
+            graph.AddNode(startNode);
+            graph.AddNode(goalNode);
+
+            BuildGraph(startNode);
+
+            Graphics graphics = Graphics.FromImage(maze);
             Pen myPen = new Pen(Color.Green, 1);
-            for (int i = 0; i < path.Length; i++)
-                graph.DrawLines(myPen, path);
-            graph.DrawImage(maze, new Point(0, 0) );
+
+            foreach (Node<Point> node in graph.Nodes)
+                graphics.FillRectangle(myPen.Brush, node.Value.X, node.Value.Y, 1, 1);
+            graphics.DrawImage(maze, new Point(0, 0));
 
             // save solution image to destination
             maze.Save(destinationName);
