@@ -85,7 +85,6 @@ namespace SolveMaze
     public class Node
     {
         private Point data;         private List<Node> neighbors = null;
-        private List<Path> paths;
 
         public Node() { }         public Node(Point data) : this(data, null) { }         public Node(Point data, List<Node> neighbors)         {             this.data = data;             this.neighbors = neighbors;         }
 
@@ -107,16 +106,6 @@ namespace SolveMaze
         }
 
         public List<Node> Neighbors         {             get             {                 if (neighbors == null)                     neighbors = new List<Node>();                 return neighbors;             }             set             {                 neighbors = value;             }         }
-
-        public List<Path> Paths
-        {
-            get
-            {
-                if (paths == null)
-                    paths = new List<Path>();
-                return paths;
-            }
-        }
     }
 
 
@@ -152,16 +141,22 @@ namespace SolveMaze
             nodeSet.Add(node);
         }
 
+        public void RemoveUndirectedEdge(ref Node from, ref Node to)
+        {
+            from.Neighbors.Remove(to);
+            to.Neighbors.Remove(from);
+
+            edgeDictionary.Remove(new Edge(from.Position, to.Position));
+            edgeDictionary.Remove(new Edge(to.Position, from.Position));
+        }
+
         public void AddUndirectedEdge(ref Node from, ref Node to, Path path)
         {
             from.Neighbors.Add(to);
-            from.Paths.Add(path);
             edgeDictionary.Add(new Edge(from.Position, to.Position), path);
 
             Path reverse = path.Reverse();
-
             to.Neighbors.Add(from);
-            to.Paths.Add(reverse);
             edgeDictionary.Add(new Edge(to.Position, from.Position), reverse);
         }
 
@@ -170,7 +165,16 @@ namespace SolveMaze
             return nodeSet.Find(n => n.Position == value);
         }
 
-        public Point[] FindPath(Node from, Node to)
+        public Path FindPath(Node from, Node to)
+        {
+            Edge edge = new Edge(from.Position, to.Position);
+            if (edgeDictionary.ContainsKey(edge))
+                return edgeDictionary[edge];
+            
+            return null;
+        }
+
+        public Point[] FindPathPoints(Node from, Node to)
         {
             Edge edge = new Edge(from.Position, to.Position);
             if (edgeDictionary.ContainsKey(edge))
@@ -193,7 +197,7 @@ namespace SolveMaze
             return FindNode(value) != null;
         }
 
-        public bool Remove(Point value)
+        public bool RemoveNode(Point value)
         {
             // first remove the node from the nodeset
            Node nodeToRemove = FindNode(value);

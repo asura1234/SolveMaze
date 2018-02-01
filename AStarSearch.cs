@@ -63,7 +63,7 @@ namespace SolveMaze
                     if (!openSet.Contains(neighborPNode))
                         openSet.Enqueue(neighborPNode);
 
-                    double tentative_gScore = gScore[current] + graph.FindPathCost(current, neighbor);
+                    double tentative_gScore = gScore[current] + graph.FindPath(current, neighbor).Cost;
                     if (tentative_gScore >= gScore[neighbor])
                         continue;
 
@@ -95,7 +95,7 @@ namespace SolveMaze
                 Node previous = current;
                 current = cameFrom[current];
 
-                Point[] path = graph.FindPath(previous, current);
+                Point[] path = graph.FindPathPoints(previous, current);
                 for (int i = 0; i < path.Length; i++)
                     totalPath.Add(path[i]);
 

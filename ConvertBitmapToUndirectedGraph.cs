@@ -106,10 +106,28 @@ namespace SolveMaze
                 }
                 // if it is dead end, then stop
             }
-            // if it is a previous node and it is not a loop, add connection to it
-            else if (!currentNode.Equals(lastNode) && graph.FindPath(lastNode, currentNode) == null)
-                graph.AddUndirectedEdge(ref lastNode, ref currentNode, path);
+            // if it is previous node
+            else
+            {
+                // if it is a loop, then stop
+                if (currentNode.Equals(lastNode))
+                    return;
 
+                Path existing = graph.FindPath(lastNode, currentNode);
+                // if a path already exists
+                if (existing != null)
+                {
+                    // if the exisitng path is longer than the new path
+                    if (existing.Cost > path.Cost)
+                    {
+                        graph.RemoveUndirectedEdge(ref lastNode, ref currentNode);
+                        graph.AddUndirectedEdge(ref lastNode, ref currentNode, path);
+                    }
+                }
+                // if no path exists, then add a path 
+                else
+                    graph.AddUndirectedEdge(ref lastNode, ref currentNode, path);
+            }
         }
 
         public static Graph ConvertToGraph(this Bitmap source, out Node startNode, out Node goalNode)
