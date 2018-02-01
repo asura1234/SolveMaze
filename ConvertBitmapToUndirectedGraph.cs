@@ -50,14 +50,14 @@ namespace SolveMaze
             List<Point> nexts = new List<Point>();
             foreach (Size delta in deltas)
             {
-                Point next = start.Value + delta;
+                Point next = start.Position + delta;
 
                 if (!maze.GetPixel(next).IsTheSameAs(Color.Black))
                     nexts.Add(next);
             }
             foreach (Point next in nexts)
             {
-                BuildGraphHelper(start, next, start.Value, new Path());
+                BuildGraphHelper(start, next, start.Position, new Path());
             }
         }
 
@@ -90,7 +90,7 @@ namespace SolveMaze
                     foreach (Point next in nexts)
                         BuildGraphHelper(currentNode, next, current, new Path());
                 }
-                else if (currentNode.Value != lastNode.Value)
+                else if (currentNode.Position != lastNode.Position)
                     graph.AddUndirectedEdge(ref lastNode, ref currentNode, path);
             }
             else if (nexts.Count == 1)
@@ -101,7 +101,7 @@ namespace SolveMaze
             }
         }
 
-        public static Graph ConvertToGraph(this Bitmap source)
+        public static Graph ConvertToGraph(this Bitmap source, out Node startNode, out Node goalNode)
         {
             maze = source;
             graph = new Graph();
@@ -109,8 +109,8 @@ namespace SolveMaze
             Point start, goal;
             FindStartNGoal(out start, out goal);
 
-            Node startNode = new Node(start);
-            Node goalNode = new Node(goal);
+            startNode = new Node(start);
+            goalNode = new Node(goal);
 
             graph.AddNode(startNode);
             graph.AddNode(goalNode);
@@ -121,7 +121,7 @@ namespace SolveMaze
             Pen myPen = new Pen(Color.Green, 1);
             Graphics graphics = Graphics.FromImage(maze);
             foreach (Node node in graph.Nodes)
-                graphics.FillRectangle(myPen.Brush, node.Value.X, node.Value.Y, 1, 1);
+                graphics.FillRectangle(myPen.Brush, node.Position.X, node.Position.Y, 1, 1);
             graphics.DrawImage(maze, new Point(0, 0));
             maze.Save("maze0_graph.png");
             // end debug code

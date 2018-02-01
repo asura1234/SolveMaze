@@ -5,38 +5,9 @@ using System.Collections.ObjectModel;
 
 namespace SolveMaze
 {
-    // credit: Scott Mitchell
+    // based on the following
+    // Scott Mitchell
     // https://msdn.microsoft.com/en-us/library/ms379574(v=vs.80).aspx
-
-    public class NodeList : Collection<Node>
-    {
-        public NodeList() : base() { }
-
-        public NodeList(int initialSize)
-        {
-            // Add the specified number of items
-            for (int i = 0; i < initialSize; i++)
-                base.Items.Add(default(Node));
-        }
-
-        public bool Contains(Point value)
-        {
-            if (FindByValue(value) != null)
-                return true;
-            return false;
-        }
-
-        public Node FindByValue(Point value)
-        {
-            // search the list for the value
-            foreach (Node node in Items)
-                if (node.Value.Equals(value))
-                    return node;
-
-            // if we reached here, we didn't find a matching node
-            return null;
-        }
-    }
 
     public class Path
     {
@@ -51,6 +22,11 @@ namespace SolveMaze
         {
             list = new LinkedList<Point>();
             list.AddLast(new LinkedListNode<Point>(point));
+        }
+
+        public List<Point> ToList()
+        {
+            return new List<Point>(list);
         }
 
         public bool IsEmpty
@@ -86,12 +62,17 @@ namespace SolveMaze
 
     public class Node
     {
-        private Point data;         private NodeList neighbors = null;
+        private Point data;         private List<Node> neighbors = null;
         private List<Path> paths;
 
-        public Node() { }         public Node(Point data) : this(data, null) { }         public Node(Point data, NodeList neighbors)         {             this.data = data;             this.neighbors = neighbors;         }
+        public Node() { }         public Node(Point data) : this(data, null) { }         public Node(Point data, List<Node> neighbors)         {             this.data = data;             this.neighbors = neighbors;         }
 
-        public Point Value
+        public bool Equals(Node other)
+        {
+            return data == other.data;
+        }
+
+        public Point Position
         {
             get
             {
@@ -108,9 +89,9 @@ namespace SolveMaze
             return Paths[i].Count;
         }
 
-        public NodeList Neighbors         {             get             {                 if (neighbors == null)                     neighbors = new NodeList();                 return neighbors;             }             set             {                 neighbors = value;             }         }
+        public List<Node> Neighbors         {             get             {                 if (neighbors == null)                     neighbors = new List<Node>();                 return neighbors;             }             set             {                 neighbors = value;             }         }
 
-        public new List<Path> Paths
+        public List<Path> Paths
         {
             get
             {
@@ -123,13 +104,13 @@ namespace SolveMaze
 
     public class Graph
     {
-        private NodeList nodeSet;
+        private List<Node> nodeSet;
 
         public Graph() : this(null) { }
-        public Graph(NodeList nodeSet)
+        public Graph(List<Node> nodeSet)
         {
             if (nodeSet == null)
-                this.nodeSet = new NodeList();
+                this.nodeSet = new List<Node>();
             else
                 this.nodeSet = nodeSet;
         }
@@ -157,18 +138,18 @@ namespace SolveMaze
 
         public Node Find(Point value)
         {
-            return nodeSet.FindByValue(value);
+            return nodeSet.Find(n => n.Position == value);
         }
 
         public bool Contains(Point value)
         {
-            return nodeSet.FindByValue(value) != null;
+            return Find(value) != null;
         }
 
         public bool Remove(Point value)
         {
             // first remove the node from the nodeset
-           Node nodeToRemove = (Node)nodeSet.FindByValue(value);
+           Node nodeToRemove = Find(value);
             if (nodeToRemove == null)
                 // node wasn't found
                 return false;
@@ -190,7 +171,7 @@ namespace SolveMaze
             return true;
         }
 
-        public NodeList Nodes
+        public List<Node> Nodes
         {
             get
             {

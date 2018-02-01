@@ -6,12 +6,12 @@ namespace SolveMaze
 {
     public class PNode : IComparable<PNode>
     {
-        public Point Point;
+        public Node node;
         public double fScore;
 
-        public PNode(Point pos, double score)
+        public PNode(Node node, double score)
         {
-            Point = pos;
+            this.node = node;
             fScore = score;
         }
 
@@ -24,62 +24,38 @@ namespace SolveMaze
             else
                 return 0;
         }
-
-        public bool Equals(Point other)
-        {
-            return Point.X == other.X && Point.Y == other.Y;
-        }
     }
 
     // based on the pseudocode provided on Wikipedia for A* search algorithm
     // https://en.wikipedia.org/wiki/A*_search_algorithm#Pseudocode
-    public class AStarSearch
+    public static class AStarSearch
     {
-        private Bitmap maze;
-
-        public AStarSearch(Bitmap source)
+        public static Point[] AStar(this Graph graph, Node start, Node goal)
         {
-            maze = source;
-        }
+            Dictionary<Node, Node> cameFrom = new Dictionary<Node, Node>();
+            Dictionary<Node, double> gScore = new Dictionary<Node, double>();
+            Dictionary<Node, double> fScore = new Dictionary<Node, double>();
 
-        private Point[] AStar(Point start, Point goal)
-        {
-            Dictionary<Point, Point> cameFrom = new Dictionary<Point, Point>();
-            Dictionary<Point, double> gScore = new Dictionary<Point, double>();
-            Dictionary<Point, double> fScore = new Dictionary<Point, double>();
-
-            for (int i = 0; i < maze.Width; i++)
+            foreach (Node node in graph.Nodes)
             {
-                for (int j = 0; j < maze.Height; j++)
-                {
-                    gScore.Add(new Point(i, j), double.PositiveInfinity);
-                    fScore.Add(new Point(i, j), double.PositiveInfinity);
-                }
+                gScore.Add(node, double.PositiveInfinity);
+                fScore.Add(node, double.PositiveInfinity);
             }
             gScore[start] = 0;
 
-            List<Point> closedSet = new List<Point>();
+            List<Node> closedSet = new List<Node>();
             PriorityQueue<PNode> openSet = new PriorityQueue<PNode>();
             openSet.Enqueue(new PNode(start, fScore[start]));
 
             while (!openSet.IsEmpty())
             {
-                Point current = (openSet.Dequeue()).Point;
+                Node current = (openSet.Dequeue()).node;
                 if (current.Equals(goal))
                     return ReconstructPath(cameFrom, current);
                 closedSet.Add(current);
 
-                Point[] deltas = new Point[] { new Point(0, 1), new Point(0, -1), new Point(1, 0), new Point(-1, 0) };
-
-                foreach (Point d in deltas)
+                foreach (Node neighbor in current.)
                 {
-                    int x = current.X + d.X;
-                    int y = current.Y + d.Y;
-                    Point neighbor = new Point(x, y);
-
-                    if (maze.GetPixel(x, y).ToArgb() != Color.Black.ToArgb())
-                        continue;
-
                     if (closedSet.Contains(neighbor))
                         continue;
 
@@ -99,25 +75,36 @@ namespace SolveMaze
             return new Point[0];
         }
 
-        private double DistanceBetween(Point a, Point b)
+        private static double DistanceBetween(Point a, Point b)
         {
             return Math.Sqrt((a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y));
         }
 
-        private double HeuristicCostEstimate(Point current, Point goal)
+        private static double HeuristicCostEstimate(Node current, Node goal)
         {
-            return DistanceBetween(current, goal);
+            return DistanceBetween(current.Position, goal.Position);
         }
 
-        private Point[] ReconstructPath(Dictionary<Point, Point> cameFrom, Point current)
+        private static Point[] ReconstructPath(Dictionary<Node, Node> cameFrom, Node current)
         {
             List<Point> totalPath = new List<Point>();
-            totalPath.Add(current);
+            totalPath.Add(current.Position);
 
             while (cameFrom.ContainsKey(current))
             {
+                Node previous = current;
                 current = cameFrom[current];
-                totalPath.Add(current);
+
+                for (int i = 0; i < previous.Neighbors.Count; i++)
+                {
+                    if (current == previous.Neighbors[i])
+                    {
+                        List<Point> points = previous.Paths[i].ToList();
+                        for (int j = 0; j < points.Count - 1; j++)
+                            totalPath.Add(points[j]);
+                        break;
+                    }
+                }
             }
             Point[] results = new Point[totalPath.Count - 2];
             totalPath.CopyTo(1, results, 0, totalPath.Count - 2);
