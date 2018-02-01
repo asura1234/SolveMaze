@@ -15,5 +15,18 @@ namespace SolveMaze
             return a.ToArgb() == b.ToArgb();
         }
 
+        public static void DrawPoint(this Graphics graphics, Point p, Color c)
+        {
+            Pen myPen = new Pen(c, 1);
+            graphics.FillRectangle(myPen.Brush, p.X, p.Y, 1, 1);
+        }
+
+        public static void DrawPoints(this Graphics graphics, Point[] ps, Color c)
+        {
+            for (int i = 0; i < ps.Length; i++)
+            {
+                graphics.DrawPoint(ps[i], c);
+            }
+        }
     }
 }

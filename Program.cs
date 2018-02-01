@@ -15,12 +15,11 @@ namespace SolveMaze
             Bitmap maze = new Bitmap(sourceName);
             Node start, goal;
             Graph graph = maze.ConvertToGraph(out start, out goal);
+
             Point[] solution = graph.AStar(start, goal);
 
             Graphics graphics = Graphics.FromImage(maze);
-            Pen myPen = new Pen(Color.Green, 1);
-            for (int i = 0; i < solution.Length; i++)
-                graphics.DrawLines(myPen, solution);
+            graphics.DrawPoints(solution, Color.Green);
             graphics.DrawImage(maze, new Point(0, 0));
 
             maze.Save(destinationName);

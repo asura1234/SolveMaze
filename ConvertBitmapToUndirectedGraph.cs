@@ -8,6 +8,7 @@ namespace SolveMaze
     {
         static Bitmap maze;
         static Graph graph;
+        static Size[] deltas = new Size[] { new Size(0, 1), new Size(0, -1), new Size(1, 0), new Size(-1, 0) };
 
         static void FindStartNGoal(out Point s, out Point g)
         {
@@ -44,44 +45,49 @@ namespace SolveMaze
             return true;
         }
 
-        static void BuildGraph(Node start)
+        static void BuildGraph()
         {
-            Size[] deltas = new Size[] { new Size(0, 1), new Size(0, -1), new Size(1, 0), new Size(-1, 0) };
-            List<Point> nexts = new List<Point>();
-            foreach (Size delta in deltas)
+            foreach (Node node in graph.Nodes.ToArray())
             {
-                Point next = start.Position + delta;
+                List<Point> nexts = new List<Point>();
+                foreach (Size delta in deltas)
+                {
+                    Point next = node.Position + delta;
 
-                if (!maze.GetPixel(next).IsTheSameAs(Color.Black))
-                    nexts.Add(next);
-            }
-            foreach (Point next in nexts)
-            {
-                BuildGraphHelper(start, next, start.Position, new Path());
+                    if (!maze.GetPixel(next).IsTheSameAs(Color.Black))
+                        nexts.Add(next);
+                }
+                foreach (Point next in nexts)
+                    BuildGraphHelper(node, next, node.Position, new Path());
             }
         }
 
         static void BuildGraphHelper(Node lastNode, Point current, Point previous, Path path)
         {
-            Size[] allDeltas = new Size[] { new Size(0, 1), new Size(0, -1), new Size(1, 0), new Size(-1, 0) };
+            
             List<Point> nexts = new List<Point>();
-            foreach (Size delta in allDeltas)
+            foreach (Size delta in deltas)
             {
                 Point next = current + delta;
 
+                // if it goes out side the boundry, then ignore it
                 if (!IsInside(next))
                     continue;
 
+                // if it does not hit a wall
                 if (!maze.GetPixel(next).IsTheSameAs(Color.Black))
                 {
+                    // if it is not the way it came from
                     if (next != previous)
                         nexts.Add(next);
                 }
             }
-            if (nexts.Count > 1)
+            Node currentNode = graph.FindNode(current);
+            // if it is not a previous node, then keep going
+            if (currentNode == null)
             {
-                Node currentNode = graph.Find(current);
-                if (currentNode == null)
+                // if it is an intersection, then add a new node and start building from the new node
+                if (nexts.Count > 1)
                 {
                     currentNode = new Node(current);
                     graph.AddNode(currentNode);
@@ -90,15 +96,19 @@ namespace SolveMaze
                     foreach (Point next in nexts)
                         BuildGraphHelper(currentNode, next, current, new Path());
                 }
-                else if (currentNode.Position != lastNode.Position)
-                    graph.AddUndirectedEdge(ref lastNode, ref currentNode, path);
+                // if it is not an intersection, then keep going
+                else if (nexts.Count == 1)
+                {
+                    Point next = nexts[0];
+                    path.Append(current);
+                    BuildGraphHelper(lastNode, next, current, path);
+                }
+                // if it is dead end, then stop
             }
-            else if (nexts.Count == 1)
-            {
-                Point next = nexts[0];
-                path.Append(next);
-                BuildGraphHelper(lastNode, next, current, path);
-            }
+            // if it is a previous node and it is not a loop, add connection to it
+            else if (!currentNode.Equals(lastNode))
+                graph.AddUndirectedEdge(ref lastNode, ref currentNode, path);
+
         }
 
         public static Graph ConvertToGraph(this Bitmap source, out Node startNode, out Node goalNode)
@@ -115,18 +125,27 @@ namespace SolveMaze
             graph.AddNode(startNode);
             graph.AddNode(goalNode);
 
-            BuildGraph(startNode);
+            BuildGraph();
 
-            // debug code
-            Pen myPen = new Pen(Color.Green, 1);
-            Graphics graphics = Graphics.FromImage(maze);
+            // debug code that draws every node on the graph in pink, and draws every edge in yellow
+            // white space on this image indicates it is a dead end, therefore no edge travels through there
+            // ******IMPORTANT******* comment out this part otherwise it will be drawn onto the solution image too
+
+            /*Graphics graphics = Graphics.FromImage(maze);
             foreach (Node node in graph.Nodes)
-                graphics.FillRectangle(myPen.Brush, node.Position.X, node.Position.Y, 1, 1);
+            {
+                graphics.DrawPoint(node.Position, Color.Pink);
+                foreach (Path path in node.Paths)
+                {
+                    Point[] points = path.ToArray();
+                    for (int i = 0; i < points.Length; i++)
+                        graphics.DrawPoint(points[i], Color.Yellow);
+                }
+            }
             graphics.DrawImage(maze, new Point(0, 0));
-            maze.Save("maze0_graph.png");
-            // end debug code
+            maze.Save("maze0_graph.png");*/
 
-            maze.Dispose();
+            // end debug code
             return graph;
         }
     }

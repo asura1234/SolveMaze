@@ -54,7 +54,7 @@ namespace SolveMaze
                     return ReconstructPath(cameFrom, current);
                 closedSet.Add(current);
 
-                foreach (Node neighbor in current.)
+                foreach (Node neighbor in current.Neighbors)
                 {
                     if (closedSet.Contains(neighbor))
                         continue;
@@ -95,16 +95,11 @@ namespace SolveMaze
                 Node previous = current;
                 current = cameFrom[current];
 
-                for (int i = 0; i < previous.Neighbors.Count; i++)
-                {
-                    if (current == previous.Neighbors[i])
-                    {
-                        List<Point> points = previous.Paths[i].ToList();
-                        for (int j = 0; j < points.Count - 1; j++)
-                            totalPath.Add(points[j]);
-                        break;
-                    }
-                }
+                Point[] path = Graph.FindPath(previous, current);
+                for (int i = 0; i < path.Length; i++)
+                    totalPath.Add(path[i]);
+
+                totalPath.Add(current.Position);
             }
             Point[] results = new Point[totalPath.Count - 2];
             totalPath.CopyTo(1, results, 0, totalPath.Count - 2);

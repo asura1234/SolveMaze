@@ -24,9 +24,11 @@ namespace SolveMaze
             list.AddLast(new LinkedListNode<Point>(point));
         }
 
-        public List<Point> ToList()
+        public Point[] ToArray()
         {
-            return new List<Point>(list);
+            Point[] arr = new Point[list.Count];
+            list.CopyTo(arr, 0);
+            return arr;
         }
 
         public bool IsEmpty
@@ -136,20 +138,33 @@ namespace SolveMaze
             to.Paths.Add(path);
         }
 
-        public Node Find(Point value)
+        public Node FindNode(Point value)
         {
             return nodeSet.Find(n => n.Position == value);
         }
 
+        public static Point[] FindPath(Node from, Node to)
+        {
+            for (int i = 0; i < from.Neighbors.Count; i++)
+            {
+                if (from.Neighbors[i].Equals(to))
+                {
+                    Point[] path = from.Paths[i].ToArray();
+                    return path;
+                }
+            }
+            return null;
+        }
+
         public bool Contains(Point value)
         {
-            return Find(value) != null;
+            return FindNode(value) != null;
         }
 
         public bool Remove(Point value)
         {
             // first remove the node from the nodeset
-           Node nodeToRemove = Find(value);
+           Node nodeToRemove = FindNode(value);
             if (nodeToRemove == null)
                 // node wasn't found
                 return false;
