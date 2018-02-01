@@ -51,7 +51,7 @@ namespace SolveMaze
             {
                 Node current = (openSet.Dequeue()).node;
                 if (current.Equals(goal))
-                    return ReconstructPath(cameFrom, current);
+                    return ReconstructPath(graph, cameFrom, current);
                 closedSet.Add(current);
 
                 foreach (Node neighbor in current.Neighbors)
@@ -63,7 +63,7 @@ namespace SolveMaze
                     if (!openSet.Contains(neighborPNode))
                         openSet.Enqueue(neighborPNode);
 
-                    double tentative_gScore = gScore[current] + 1;
+                    double tentative_gScore = gScore[current] + graph.FindPathCost(current, neighbor);
                     if (tentative_gScore >= gScore[neighbor])
                         continue;
 
@@ -85,7 +85,7 @@ namespace SolveMaze
             return DistanceBetween(current.Position, goal.Position);
         }
 
-        private static Point[] ReconstructPath(Dictionary<Node, Node> cameFrom, Node current)
+        private static Point[] ReconstructPath(Graph graph, Dictionary<Node, Node> cameFrom, Node current)
         {
             List<Point> totalPath = new List<Point>();
             totalPath.Add(current.Position);
@@ -95,7 +95,7 @@ namespace SolveMaze
                 Node previous = current;
                 current = cameFrom[current];
 
-                Point[] path = Graph.FindPath(previous, current);
+                Point[] path = graph.FindPath(previous, current);
                 for (int i = 0; i < path.Length; i++)
                     totalPath.Add(path[i]);
 

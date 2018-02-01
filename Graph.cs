@@ -5,7 +5,7 @@ using System.Collections.ObjectModel;
 
 namespace SolveMaze
 {
-    // based on the following
+    // the graph data structure implementation is based on the following
     // Scott Mitchell
     // https://msdn.microsoft.com/en-us/library/ms379574(v=vs.80).aspx
 
@@ -60,6 +60,11 @@ namespace SolveMaze
         {
             list.AddLast(new LinkedListNode<Point>(point));
         }
+
+        public int Cost
+        {
+            get { return list.Count; }
+        }
     }
 
     public class Node
@@ -86,11 +91,6 @@ namespace SolveMaze
             }
         }
 
-        public int Cost(int i)
-        {
-            return Paths[i].Count;
-        }
-
         public List<Node> Neighbors         {             get             {                 if (neighbors == null)                     neighbors = new List<Node>();                 return neighbors;             }             set             {                 neighbors = value;             }         }
 
         public List<Path> Paths
@@ -104,10 +104,23 @@ namespace SolveMaze
         }
     }
 
+
     public class Graph
     {
-        private List<Node> nodeSet;
+        private struct Edge
+        {
+            Node From;
+            Node To;
 
+            public Edge (Node from, Node to)
+            {
+                From = from;
+                To = to;
+            }
+        }
+
+        private Dictionary<Edge, Path> edgeDictionary;
+        private List<Node> nodeSet;
         public Graph() : this(null) { }
         public Graph(List<Node> nodeSet)
         {
@@ -115,18 +128,13 @@ namespace SolveMaze
                 this.nodeSet = new List<Node>();
             else
                 this.nodeSet = nodeSet;
+            edgeDictionary = new Dictionary<Edge, Path>();
         }
 
         public void AddNode(Node node)
         {
             // adds a node to the graph
             nodeSet.Add(node);
-        }
-
-        public void AddNode(Point value)
-        {
-            // adds a node to the graph
-            nodeSet.Add(new Node(value));
         }
 
         public void AddUndirectedEdge(ref Node from, ref Node to, Path path)
@@ -136,6 +144,9 @@ namespace SolveMaze
 
             to.Neighbors.Add(from);
             to.Paths.Add(path);
+
+            Edge edge = new Edge(from, to);
+            edgeDictionary.Add(edge, path);
         }
 
         public Node FindNode(Point value)
@@ -143,17 +154,26 @@ namespace SolveMaze
             return nodeSet.Find(n => n.Position == value);
         }
 
-        public static Point[] FindPath(Node from, Node to)
+        public Point[] FindPath(Node from, Node to)
         {
-            for (int i = 0; i < from.Neighbors.Count; i++)
-            {
-                if (from.Neighbors[i].Equals(to))
-                {
-                    Point[] path = from.Paths[i].ToArray();
-                    return path;
-                }
-            }
+            Edge edge = new Edge(from, to);
+            Path path = edgeDictionary[edge];
+
+            if (path != null)
+                return path.ToArray();
+            
             return null;
+        }
+
+        public int FindPathCost(Node from, Node to)
+        {
+            Edge edge = new Edge(from, to);
+            Path path = edgeDictionary[edge];
+
+            if (path != null)
+                return path.Cost;
+            
+            return -1;
         }
 
         public bool Contains(Point value)
@@ -192,11 +212,6 @@ namespace SolveMaze
             {
                 return nodeSet;
             }
-        }
-
-        public int Count
-        {
-            get { return nodeSet.Count; }
         }
     }
 }

@@ -9,13 +9,14 @@ namespace SolveMaze
         static Bitmap maze;
         static Graph graph;
         static Size[] deltas = new Size[] { new Size(0, 1), new Size(0, -1), new Size(1, 0), new Size(-1, 0) };
+        static int windowSize = 43;
 
         static void FindStartNGoal(out Point s, out Point g)
         {
             bool start_found = false, goal_found = false;
-            for (int x = 0; x < maze.Width; x++)
+            for (uint x = 0; x < maze.Width; x++)
             {
-                for (int y = 0; y < maze.Height; y++)
+                for (uint y = 0; y < maze.Height; y++)
                 {
                     Point p = new Point(x, y);
                     Color c = maze.GetPixel(p);
@@ -138,7 +139,7 @@ namespace SolveMaze
                 foreach (Path path in node.Paths)
                 {
                     Point[] points = path.ToArray();
-                    for (int i = 0; i < points.Length; i++)
+                    for (uint i = 0; i < points.Length; i++)
                         graphics.DrawPoint(points[i], Color.Yellow);
                 }
             }
