@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections;
+using System.Drawing;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
@@ -8,7 +8,7 @@ namespace SolveMaze
     // credit: Scott Mitchell
     // https://msdn.microsoft.com/en-us/library/ms379574(v=vs.80).aspx
 
-    public class NodeList<T> : Collection<Node<T>>
+    public class NodeList : Collection<Node>
     {
         public NodeList() : base() { }
 
@@ -16,13 +16,20 @@ namespace SolveMaze
         {
             // Add the specified number of items
             for (int i = 0; i < initialSize; i++)
-                base.Items.Add(default(Node<T>));
+                base.Items.Add(default(Node));
         }
 
-        public Node<T> FindByValue(T value)
+        public bool Contains(Point value)
+        {
+            if (FindByValue(value) != null)
+                return true;
+            return false;
+        }
+
+        public Node FindByValue(Point value)
         {
             // search the list for the value
-            foreach (Node<T> node in Items)
+            foreach (Node node in Items)
                 if (node.Value.Equals(value))
                     return node;
 
@@ -31,14 +38,60 @@ namespace SolveMaze
         }
     }
 
-    public class Node<T>
+    public class Path
     {
-        private T data;         private NodeList<T> neighbors = null;
-        private List<Edge<T>> edges;
+        LinkedList<Point> list;
 
-        public Node() { }         public Node(T data) : this(data, null) { }         public Node(T data, NodeList<T> neighbors)         {             this.data = data;             this.neighbors = neighbors;         }
+        public Path()
+        {
+            list = new LinkedList<Point>();
+        }
 
-        public T Value
+        public Path(Point point)
+        {
+            list = new LinkedList<Point>();
+            list.AddLast(new LinkedListNode<Point>(point));
+        }
+
+        public bool IsEmpty
+        {
+            get { return Count == 0; }
+        }
+
+        public int Count
+        {
+            get { return list.Count; }
+        }
+
+        public bool Contains(Point value)
+        {
+            return list.Contains(value);
+        }
+
+        public Point LastPoint
+        {
+            get { return list.Last.Value; }
+        }
+
+        public Point FirstPoint
+        {
+            get { return list.First.Value; }
+        }
+
+        public void Append(Point point)
+        {
+            list.AddLast(new LinkedListNode<Point>(point));
+        }
+    }
+
+    public class Node
+    {
+        private Point data;         private NodeList neighbors = null;
+        private List<Path> paths;
+
+        public Node() { }         public Node(Point data) : this(data, null) { }         public Node(Point data, NodeList neighbors)         {             this.data = data;             this.neighbors = neighbors;         }
+
+        public Point Value
         {
             get
             {
@@ -50,123 +103,72 @@ namespace SolveMaze
             }
         }
 
-        public NodeList<T> Neighbors         {             get             {                 if (neighbors == null)                     return new NodeList<T>();                 return neighbors;             }             set             {                 neighbors = value;             }         }
+        public int Cost(int i)
+        {
+            return Paths[i].Count;
+        }
 
-        public new List<Edge<T>> Edges
+        public NodeList Neighbors         {             get             {                 if (neighbors == null)                     neighbors = new NodeList();                 return neighbors;             }             set             {                 neighbors = value;             }         }
+
+        public new List<Path> Paths
         {
             get
             {
-                if (edges == null)
-                    edges = new List<Edge<T>>();
-
-                return edges;
+                if (paths == null)
+                    paths = new List<Path>();
+                return paths;
             }
         }
     }
 
-    public class Edge<T>
+    public class Graph
     {
-        private T data;
-        private int cost;
-
-        public Edge() {}
-        public Edge(T data)
-        {
-            this.data = data;
-            cost = 0;
-        }
-
-        public Edge(int cost)
-        {
-            this.cost = cost;
-        }
-
-        public Edge(T data, int cost)
-        {
-            this.data = data;
-            this.cost = cost;
-        }
-
-        public T Value
-        {
-            get
-            {
-                return data;
-            }
-            set
-            {
-                data = value;
-            }
-        }
-
-        public int Cost
-        {
-            get
-            {
-                return cost;
-            }
-            set
-            {
-                cost = value;
-            }
-        }
-    }
-
-
-    public class Graph<T>
-    {
-        private NodeList<T> nodeSet;
+        private NodeList nodeSet;
 
         public Graph() : this(null) { }
-        public Graph(NodeList<T> nodeSet)
+        public Graph(NodeList nodeSet)
         {
             if (nodeSet == null)
-                this.nodeSet = new NodeList<T>();
+                this.nodeSet = new NodeList();
             else
                 this.nodeSet = nodeSet;
         }
 
-        public void AddNode(Node<T> node)
+        public void AddNode(Node node)
         {
             // adds a node to the graph
             nodeSet.Add(node);
         }
 
-        public void AddNode(T value)
+        public void AddNode(Point value)
         {
             // adds a node to the graph
-            nodeSet.Add(new Node<T>(value));
+            nodeSet.Add(new Node(value));
         }
 
-        public void AddDirectedEdge(Node<T> from, Node<T> to, Edge<T> edge)
+        public void AddUndirectedEdge(ref Node from, ref Node to, Path path)
         {
             from.Neighbors.Add(to);
-            from.Edges.Add(edge);
-        }
-
-        public void AddUndirectedEdge(Node<T> from, Node<T> to, Edge<T> edge)
-        {
-            from.Neighbors.Add(to);
-            from.Edges.Add(edge);
+            from.Paths.Add(path);
 
             to.Neighbors.Add(from);
-            to.Edges.Add(edge);
+            to.Paths.Add(path);
         }
 
-        public Node<T> Find(T value)
+        public Node Find(Point value)
         {
             return nodeSet.FindByValue(value);
         }
 
-        public bool Contains(T value)
+        public bool Contains(Point value)
         {
             return nodeSet.FindByValue(value) != null;
         }
 
-        public bool Remove(T value)
+        public bool Remove(Point value)
         {
             // first remove the node from the nodeset
-           Node<T> nodeToRemove = (Node<T>)nodeSet.FindByValue(value);
+           Node nodeToRemove = (Node)nodeSet.FindByValue(value);
             if (nodeToRemove == null)
                 // node wasn't found
                 return false;
@@ -174,22 +176,21 @@ namespace SolveMaze
             // otherwise, the node was found
             nodeSet.Remove(nodeToRemove);
 
-            // enumerate through each node in the nodeSet, removing edges to this node
-            foreach (Node<T> gnode in nodeSet)
+            // enumerate through each node in the nodeSet, removing paths to this node
+            foreach (Node gnode in nodeSet)
             {
                 int index = gnode.Neighbors.IndexOf(nodeToRemove);
                 if (index != -1)
                 {
                     // remove the reference to the node and associated cost
                     gnode.Neighbors.RemoveAt(index);
-                    gnode.Edges.RemoveAt(index);
                 }
             }
 
             return true;
         }
 
-        public NodeList<T> Nodes
+        public NodeList Nodes
         {
             get
             {

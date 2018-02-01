@@ -40,6 +40,8 @@
     <Compile Include="AStarSearch.cs" />
     <Compile Include="Preprocess.cs" />
     <Compile Include="Graph.cs" />
+    <Compile Include="Extension.cs" />
+    <Compile Include="ConvertBitmapToUndirectedGraph.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />
