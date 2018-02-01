@@ -13,15 +13,17 @@ namespace SolveMaze
     {
         LinkedList<Point> list;
 
-        public Path()
-        {
-            list = new LinkedList<Point>();
+        public Path() 
+        { 
+            list = new LinkedList<Point>(); 
         }
 
-        public Path(Point point)
+        public Path(LinkedList<Point> list)
         {
-            list = new LinkedList<Point>();
-            list.AddLast(new LinkedListNode<Point>(point));
+            if (list != null)
+                this.list = list;
+            else
+                list = new LinkedList<Point>();
         }
 
         public Point[] ToArray()
@@ -29,6 +31,19 @@ namespace SolveMaze
             Point[] arr = new Point[list.Count];
             list.CopyTo(arr, 0);
             return arr;
+        }
+
+        public Path Reverse()
+        {
+            LinkedList<Point> newList = new LinkedList<Point>();
+            LinkedListNode<Point> last = list.Last;
+
+            while(last != null)
+            {
+                newList.AddLast(new LinkedListNode<Point>(last.Value));
+                last = last.Previous;
+            }
+            return new Path(newList);
         }
 
         public bool IsEmpty
@@ -109,10 +124,10 @@ namespace SolveMaze
     {
         private struct Edge
         {
-            Node From;
-            Node To;
+            Point From;
+            Point To;
 
-            public Edge (Node from, Node to)
+            public Edge (Point from, Point to)
             {
                 From = from;
                 To = to;
@@ -141,12 +156,13 @@ namespace SolveMaze
         {
             from.Neighbors.Add(to);
             from.Paths.Add(path);
+            edgeDictionary.Add(new Edge(from.Position, to.Position), path);
+
+            Path reverse = path.Reverse();
 
             to.Neighbors.Add(from);
-            to.Paths.Add(path);
-
-            Edge edge = new Edge(from, to);
-            edgeDictionary.Add(edge, path);
+            to.Paths.Add(reverse);
+            edgeDictionary.Add(new Edge(to.Position, from.Position), reverse);
         }
 
         public Node FindNode(Point value)
@@ -156,23 +172,19 @@ namespace SolveMaze
 
         public Point[] FindPath(Node from, Node to)
         {
-            Edge edge = new Edge(from, to);
-            Path path = edgeDictionary[edge];
-
-            if (path != null)
-                return path.ToArray();
+            Edge edge = new Edge(from.Position, to.Position);
+            if (edgeDictionary.ContainsKey(edge))
+                return edgeDictionary[edge].ToArray();
             
             return null;
         }
 
         public int FindPathCost(Node from, Node to)
         {
-            Edge edge = new Edge(from, to);
-            Path path = edgeDictionary[edge];
+            Edge edge = new Edge(from.Position, to.Position);
+            if (edgeDictionary.ContainsKey(edge))
+                return edgeDictionary[edge].Cost;
 
-            if (path != null)
-                return path.Cost;
-            
             return -1;
         }
 

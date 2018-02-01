@@ -14,9 +14,9 @@ namespace SolveMaze
         static void FindStartNGoal(out Point s, out Point g)
         {
             bool start_found = false, goal_found = false;
-            for (uint x = 0; x < maze.Width; x++)
+            for (int x = 0; x < maze.Width; x++)
             {
-                for (uint y = 0; y < maze.Height; y++)
+                for (int y = 0; y < maze.Height; y++)
                 {
                     Point p = new Point(x, y);
                     Color c = maze.GetPixel(p);
@@ -107,7 +107,7 @@ namespace SolveMaze
                 // if it is dead end, then stop
             }
             // if it is a previous node and it is not a loop, add connection to it
-            else if (!currentNode.Equals(lastNode))
+            else if (!currentNode.Equals(lastNode) && graph.FindPath(lastNode, currentNode) == null)
                 graph.AddUndirectedEdge(ref lastNode, ref currentNode, path);
 
         }
