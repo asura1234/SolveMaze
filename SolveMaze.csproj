@@ -42,6 +42,7 @@
     <Compile Include="Graph.cs" />
     <Compile Include="Extension.cs" />
     <Compile Include="ConvertBitmapToUndirectedGraph.cs" />
+    <Compile Include="ImageProcessing.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />

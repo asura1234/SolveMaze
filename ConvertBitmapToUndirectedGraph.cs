@@ -8,8 +8,9 @@ namespace SolveMaze
     {
         static Bitmap maze;
         static Graph graph;
-        static Size[] deltas = new Size[] { new Size(0, 1), new Size(0, -1), new Size(1, 0), new Size(-1, 0) };
-        static int windowSize = 43;
+        static int step = 1;
+        static Size[] deltas = new Size[] { new Size(0, step), new Size(0, -step), new Size(step, 0), new Size(-step, 0) };
+        static int windowSize = 42;
 
         static void FindStartNGoal(out Point s, out Point g)
         {
