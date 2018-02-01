@@ -147,7 +147,9 @@ namespace SolveMaze
             BuildGraph();
 
             // debug code that draws every node on the graph in pink, and draws every edge in yellow
-            // white space on this image indicates it is a dead end, therefore no edge travels through there
+            // white space on this image can indicate it is a dead end, therefore no edge travels through there
+            // or it can indicate that it belongs to an edge between two nodes that is replaced by an shorter edge 
+            // between the same nodes
             // ******IMPORTANT******* comment out this part otherwise it will be drawn onto the solution image too
 
             /*Graphics graphics = Graphics.FromImage(maze);
