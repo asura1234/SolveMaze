@@ -4,15 +4,18 @@ using System.Drawing;
 
 namespace SolveMaze
 {
-    public static class ConvertBitmapToUndirectedGraph
+    public class BitmapToUndirectedGraphConverter
     {
-        static Bitmap maze;
-        static Graph graph;
-        static int step = 1;
-        static Size[] deltas = new Size[] { new Size(0, step), new Size(0, -step), new Size(step, 0), new Size(-step, 0) };
-        static int windowSize = 42;
+        Bitmap maze;
+        Graph graph;
+        Size[] deltas = new Size[] { new Size(0, 1), new Size(0, -1), new Size(1, 0), new Size(-1, 0) };
+        bool MustFindShortest;
+        bool StopAll = false;
 
-        static void FindStartNGoal(out Point s, out Point g)
+        public Node startNode;
+        public Node goalNode;
+
+        void FindStartNGoal(out Point s, out Point g)
         {
             bool start_found = false, goal_found = false;
             for (int x = 0; x < maze.Width; x++)
@@ -38,7 +41,7 @@ namespace SolveMaze
             }
         }
 
-        static bool IsInside(Point p)
+        bool IsInside(Point p)
         {
             if (p.X < 0 || p.X >= maze.Width)
                 return false;
@@ -47,7 +50,7 @@ namespace SolveMaze
             return true;
         }
 
-        static void BuildGraph()
+        void BuildGraph()
         {
             foreach (Node node in graph.Nodes.ToArray())
             {
@@ -64,9 +67,11 @@ namespace SolveMaze
             }
         }
 
-        static void BuildGraphHelper(Node lastNode, Point current, Point previous, Path path)
+        void BuildGraphHelper(Node lastNode, Point current, Point previous, Path path)
         {
-            
+            if (StopAll)
+                return;
+
             List<Point> nexts = new List<Point>();
             foreach (Size delta in deltas)
             {
@@ -107,7 +112,7 @@ namespace SolveMaze
                 }
                 // if it is dead end, then stop
             }
-            // if it is previous node
+            // if it is previously added node
             else
             {
                 // if it is a loop, then stop
@@ -128,11 +133,28 @@ namespace SolveMaze
                 // if no path exists, then add a path 
                 else
                     graph.AddUndirectedEdge(ref lastNode, ref currentNode, path);
+
+                // if the problem does not require the solution to be the shortest path
+                // and if the path started or ended at the goal node
+                if (!MustFindShortest && (lastNode.Equals(goalNode) || currentNode.Equals(goalNode)))
+                {
+                    // if the graph is connected
+                    // then there should already be a way to travel from start to goal
+                    // therefore all graph building procedure should stop immediately
+                    // however if the shortest path is desirable, we need to build the whole graph
+                    // instead of just a partial connected graph with the start and goal in it
+                    if (graph.IsConnected())
+                    {
+                        StopAll = true;
+                        return;
+                    }
+                }
             }
         }
 
-        public static Graph ConvertToGraph(this Bitmap source, out Node startNode, out Node goalNode)
+        public Graph ConvertToGraph(Bitmap source, bool mustFindShortest = false)
         {
+            MustFindShortest = mustFindShortest;
             maze = source;
             graph = new Graph();
 
@@ -147,7 +169,7 @@ namespace SolveMaze
 
             BuildGraph();
 
-            // debug code that draws every node on the graph in pink, and draws every edge in yellow
+            // debug code that draws every node on the graph in pink
             // white space on this image can indicate it is a dead end, therefore no edge travels through there
             // or it can indicate that it belongs to an edge between two nodes that is replaced by an shorter edge 
             // between the same nodes
@@ -157,12 +179,6 @@ namespace SolveMaze
             foreach (Node node in graph.Nodes)
             {
                 graphics.DrawPoint(node.Position, Color.Pink);
-                foreach (Path path in node.Paths)
-                {
-                    Point[] points = path.ToArray();
-                    for (uint i = 0; i < points.Length; i++)
-                        graphics.DrawPoint(points[i], Color.Yellow);
-                }
             }
             graphics.DrawImage(maze, new Point(0, 0));
             maze.Save("maze0_graph.png");*/

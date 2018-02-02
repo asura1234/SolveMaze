@@ -13,10 +13,10 @@ namespace SolveMaze
             string destinationName = args[1];
 
             Bitmap maze = new Bitmap(sourceName);
-            Node start, goal;
-            Graph graph = maze.ConvertToGraph(out start, out goal);
+            BitmapToUndirectedGraphConverter converter = new BitmapToUndirectedGraphConverter();
+            Graph graph = converter.ConvertToGraph(maze);
 
-            Point[] solution = graph.AStar(start, goal);
+            Point[] solution = graph.AStar(converter.startNode, converter.goalNode);
 
             Graphics graphics = Graphics.FromImage(maze);
             graphics.DrawPoints(solution, Color.Green);

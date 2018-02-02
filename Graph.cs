@@ -4,10 +4,11 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 namespace SolveMaze
-{
+{ 
     // the graph data structure implementation is based on the following
     // Scott Mitchell
     // https://msdn.microsoft.com/en-us/library/ms379574(v=vs.80).aspx
+    // But it has been HEAVILY and PURPOSELY modified for this problem
 
     public class Path
     {
@@ -85,6 +86,7 @@ namespace SolveMaze
     public class Node
     {
         private Point data;         private List<Node> neighbors = null;
+        public int Index = -1;
 
         public Node() { }         public Node(Point data) : this(data, null) { }         public Node(Point data, List<Node> neighbors)         {             this.data = data;             this.neighbors = neighbors;         }
 
@@ -123,6 +125,7 @@ namespace SolveMaze
             }
         }
 
+        private bool[] visited;
         private Dictionary<Edge, Path> edgeDictionary;
         private List<Node> nodeSet;
         public Graph() : this(null) { }
@@ -138,7 +141,36 @@ namespace SolveMaze
         public void AddNode(Node node)
         {
             // adds a node to the graph
+            node.Index = Nodes.Count;
             nodeSet.Add(node);
+        }
+
+        public bool IsConnected()
+        {
+            visited = new bool[Nodes.Count];
+            for (int i = 0; i < Nodes.Count; i++)
+                visited[i] = false;
+
+            DepthFirstSearch(Nodes[0]);
+
+            for (int i = 0; i < Nodes.Count; i++)
+            {
+                if (!visited[i])
+                    return false;
+            }
+            return true;
+        }
+
+        private void DepthFirstSearch(Node node)
+        {
+            if (visited[node.Index])
+                return;
+            visited[node.Index] = true;
+            foreach (Node neighbor in node.Neighbors)
+            {
+                if (!visited[neighbor.Index])
+                    DepthFirstSearch(neighbor);
+            }
         }
 
         public void RemoveUndirectedEdge(ref Node from, ref Node to)

@@ -41,7 +41,7 @@
     <Compile Include="Preprocess.cs" />
     <Compile Include="Graph.cs" />
     <Compile Include="Extension.cs" />
-    <Compile Include="ConvertBitmapToUndirectedGraph.cs" />
+    <Compile Include="BitmapToUndirectedGraphConverter.cs" />
     <Compile Include="ImageProcessing.cs" />
   </ItemGroup>
   <ItemGroup>
