@@ -40,7 +40,6 @@
     <Compile Include="AStarSearch.cs" />
     <Compile Include="Extension.cs" />
     <Compile Include="PointDictioinary.cs" />
-    <Compile Include="Preprocessor.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />

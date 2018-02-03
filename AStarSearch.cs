@@ -7,21 +7,12 @@ namespace SolveMaze
     {
         private Bitmap sourceImage;
         string solutionImageName;
-        int Width, Height;
-        Preprocessor preprocessor;
-        PointDictioinary<short> maze;
-        PointDictioinary<double> distanceMatrix;
 
         static Size[] deltas = new Size[] { new Size(0, 1), new Size(0, -1), new Size(1, 0), new Size(-1, 0) };
 
         public AStarSearch(string sourceImageName, string solutionImageName)
         {
-            sourceImage = new Bitmap(sourceImageName);
-            preprocessor = new Preprocessor(sourceImage);
-            Width = preprocessor.Width;
-            Height = preprocessor.Height;
-            maze = preprocessor.maze;
-            distanceMatrix = preprocessor.distanceMatrix;
+            this.sourceImage = new Bitmap(sourceImageName);
             this.solutionImageName = solutionImageName;
         }
 
@@ -56,7 +47,10 @@ namespace SolveMaze
         // https://en.wikipedia.org/wiki/A*_search_algorithm#Pseudocode
         public void Search()
         {
-            Point start = preprocessor.Start;
+            // find the start and goal point
+            Point start, goal;
+            var maze = Preprocess(out start, out goal);
+
             var cameFrom = new PointDictioinary<Point>(maze.Width, maze.Height);
             var gScore = new PointDictioinary<double>(maze.Width, maze.Height);
             var fScore = new PointDictioinary<double>(maze.Width, maze.Height);
@@ -79,20 +73,24 @@ namespace SolveMaze
             openSet[start] = 1;
 
             int count = 0;
-            int percentage = 0;
-            int prev_percentage = 0;
+            double percentage = 0;
+            double prev_percentage = 0;
             while (!queue.IsEmpty())
             {
                 Point current = (queue.Dequeue()).Point;
                 openSet[current] = 0;
                 closedSet[current] = 1;
 
-                count++;
-                percentage = count * 100 / (maze.Width * maze.Height);
-                if (percentage - prev_percentage > 1)
-                    Console.WriteLine(percentage.ToString("F") + "% of the pixels have been searched.");
 
-                if (maze[current] == 2)
+                count++;
+                if (count % 100 == 0)
+                {
+                    percentage = count * 100.0 / (maze.Width * maze.Height);
+                    if (percentage - prev_percentage > 1)
+                        Console.WriteLine(percentage.ToString("F") + "% of the pixels have been processed.");
+                }
+
+                if (current.Equals(goal))
                 {
                     Console.WriteLine("Pathfinding complete.");
                     ReconstructPath(cameFrom, current);
@@ -128,11 +126,24 @@ namespace SolveMaze
 
                     cameFrom[neighbor] = current;
                     gScore[neighbor] = tentative_gScore;
-                    fScore[neighbor] = gScore[neighbor] + distanceMatrix[neighbor];
+                    fScore[neighbor] = gScore[neighbor] + HeuristicCostEstimate(neighbor, goal);
                 }
             }
             Console.WriteLine("Pathfinding failed.");
             return;
+        }
+
+        private double DistanceBetween(Point a, Point b)
+        {
+            int dx = a.X - b.X;
+            int dy = a.Y - b.Y;
+
+            return Math.Sqrt(dx * dx + dy * dy);
+        }
+
+        private double HeuristicCostEstimate(Point current, Point goal)
+        {
+            return DistanceBetween(current, goal);
         }
 
         // based on the pseudocode provided on Wikipedia for A* search algorithm
@@ -149,6 +160,40 @@ namespace SolveMaze
             }
             sourceImage.Save(solutionImageName);
             Console.WriteLine("Solution is saved.");
+        }
+
+        private BinaryMatrix Preprocess(out Point start, out Point goal)
+        {
+            var result = new BinaryMatrix(sourceImage.Width, sourceImage.Height);
+            bool start_found = false, goal_found = false;
+            for (int x = 0; x < sourceImage.Width; x++)
+            {
+                for (int y = 0; y < sourceImage.Height; y++)
+                {
+                    Color c = sourceImage.GetPixel(x, y);
+                    if (c.IsTheColorSameAs(Color.Black))
+                    {
+                        result[x, y] = 1;
+                    }
+                    else
+                    {
+                        result[x, y] = 0;
+                        if (c.IsTheColorSameAs(Color.Blue))
+                        {
+                            goal = new Point(x, y);
+                            goal_found = true;
+                        }
+                        else if (c.IsTheColorSameAs(Color.Red))
+                        {
+                            start = new Point(x, y);
+                            start_found = true;
+                        }
+                    }
+                    if (start_found && goal_found)
+                        break;
+                }
+            }
+            return result;
         }
     }
 }
