@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Collections.Generic;
 
 namespace SolveMaze
 {
@@ -7,11 +8,16 @@ namespace SolveMaze
     {
         private Bitmap sourceImage;
         string solutionImageName;
+        int Width, Height;
+        Point start, goal;
 
         public AStarSearch(string sourceImageName, string solutionImageName)
         {
             this.sourceImage = new Bitmap(sourceImageName);
             this.solutionImageName = solutionImageName;
+            this.Width = sourceImage.Width;
+            this.Height = sourceImage.Height;
+            FindStartNGoal();
         }
 
         private class Node : IComparable<Node>
@@ -41,21 +47,34 @@ namespace SolveMaze
             }
         }
 
+        public bool IsWall(Point p)
+        {
+            return sourceImage.GetPixel(p.X, p.Y).IsTheColorSameAs(Color.Black);
+        }
+
+        public bool IsStart(Point p)
+        {
+            return sourceImage.GetPixel(p.X, p.Y).IsTheColorSameAs(Color.Blue);
+        }
+
+        public bool IsGoal(Point p)
+        {
+            return sourceImage.GetPixel(p.X, p.Y).IsTheColorSameAs(Color.Red);
+        }
+
         // based on the pseudocode provided on Wikipedia for A* search algorithm
         // https://en.wikipedia.org/wiki/A*_search_algorithm#Pseudocode
         public void Search()
         {
             // find the start and goal point
-            Point start, goal;
-            var maze = Preprocess(out start, out goal);
 
-            var cameFrom = new PointDictioinary<Point>(maze.Width, maze.Height);
-            var gScore = new PointDictioinary<double>(maze.Width, maze.Height, double.PositiveInfinity);
-            var fScore = new PointDictioinary<double>(maze.Width, maze.Height, double.PositiveInfinity);
+            var cameFrom = new PointDictioinary<Point>(Width, Height);
+            var gScore = new PointDictioinary<double>(Width, Height, double.PositiveInfinity);
+            var fScore = new PointDictioinary<double>(Width, Height, double.PositiveInfinity);
             gScore[start] = 0;
 
-            var closedSet = new BinaryMatrix(maze.Width, maze.Height);
-            var openSet = new BinaryMatrix(maze.Width, maze.Height);
+            var closedSet = new BinaryMatrix(Width, Height);
+            var openSet = new BinaryMatrix(Width, Height);
             var queue = new PriorityQueue<Node>();
 
             queue.Enqueue(new Node(start, fScore[start]));
@@ -71,7 +90,7 @@ namespace SolveMaze
                 closedSet[current] = 1;
 
                 count++;
-                percentage = count * 100 / (maze.Width * maze.Height);
+                percentage = count * 100 / (Width * Height);
                 if (percentage - prev_percentage > 1)
                 {
                     Console.WriteLine(percentage.ToString() + "% of the pixels have been processed.");
@@ -85,20 +104,13 @@ namespace SolveMaze
                     return;
                 }
 
-                var neighbors = current.Neighbors();
+                var neighbors = current.Neighbors(sourceImage, 4);
                 foreach (Point neighbor in neighbors)
                 {
-                    
-                    int x = neighbor.X;
-                    int y = neighbor.Y;
-
-                    if (neighbor.IsOutSide(maze.Width, maze.Height))
-                        continue;
-
                     if (closedSet[neighbor] == 1)
                         continue;
 
-                    if (maze[x, y] == 1)
+                    if (IsWall(neighbor))
                         continue;
 
                     var neighborNode = new Node(neighbor, fScore[neighbor]);
@@ -108,8 +120,8 @@ namespace SolveMaze
                         openSet[neighbor] = 1;
                     }
 
-                    double tentative_gScore = gScore[current] + 1;
-                    if (tentative_gScore >= gScore[neighbor])
+                    double tentative_gScore = gScore[current] + DistanceBetween(current, neighbor);
+                    if (tentative_gScore > gScore[neighbor])
                         continue;
 
                     cameFrom[neighbor] = current;
@@ -141,51 +153,54 @@ namespace SolveMaze
             Console.WriteLine("Drawing solution ...");
             sourceImage.DrawPoint(current, Color.Green);
 
+            Point last;
             while (cameFrom.ContainsKey(current))
             {
                 current = cameFrom[current];
                 sourceImage.DrawPoint(current, Color.Green);
             }
+
             sourceImage.Save(solutionImageName);
             Console.WriteLine("Solution is saved.");
         }
 
-        private PointDictioinary<int> Preprocess(out Point start, out Point goal)
+        private void FindStartNGoal()
         {
-            var result = new PointDictioinary<int>(sourceImage.Width, sourceImage.Height);
             bool start_found = false, goal_found = false;
             for (int x = 0; x < sourceImage.Width; x++)
             {
                 for (int y = 0; y < sourceImage.Height; y++)
                 {
-                    Color c = sourceImage.GetPixel(x, y);
-                    if (c.IsTheColorSameAs(Color.Black))
-                        result[x, y] = 1;
-                    else
+                    Point p = new Point(x, y);
+                    if (IsWall(p))
+                        continue;
+                    else if (IsGoal(p))
                     {
-                        if (c.IsTheColorSameAs(Color.Blue))
+                        if (!goal_found)
                         {
-                            if (!goal_found)
-                            {
-                                goal = new Point(x, y);
-                                goal_found = true;
-                            }
-                            result[x, y] = 2;
+                            goal = p;
+                            goal_found = true;
                         }
-                        else if (c.IsTheColorSameAs(Color.Red))
+                    }
+                    else if (IsStart(p))
+                    {
+                        if (!start_found)
                         {
-                            if (!start_found)
-                            {
-                                start = new Point(x, y);
-                                start_found = true;
-                            }
-                            result[x, y] = 3;
+                            start = p;
+                            start_found = true;
                         }
-                        result[x, y] = 0;
+                    }
+
+                    if (goal_found && start_found)
+                    {
+                        Console.WriteLine("Found start and goal point.");
+                        return;
                     }
                 }
             }
-            return result;
         }
+
+
+
     }
 }
