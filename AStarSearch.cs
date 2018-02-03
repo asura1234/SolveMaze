@@ -8,8 +8,6 @@ namespace SolveMaze
         private Bitmap sourceImage;
         string solutionImageName;
 
-        static Size[] deltas = new Size[] { new Size(0, 1), new Size(0, -1), new Size(1, 0), new Size(-1, 0) };
-
         public AStarSearch(string sourceImageName, string solutionImageName)
         {
             this.sourceImage = new Bitmap(sourceImageName);
@@ -52,17 +50,8 @@ namespace SolveMaze
             var maze = Preprocess(out start, out goal);
 
             var cameFrom = new PointDictioinary<Point>(maze.Width, maze.Height);
-            var gScore = new PointDictioinary<double>(maze.Width, maze.Height);
-            var fScore = new PointDictioinary<double>(maze.Width, maze.Height);
-
-            for (int i = 0; i < maze.Width; i++)
-            {
-                for (int j = 0; j < maze.Height; j++)
-                {
-                    gScore[i, j] = double.PositiveInfinity;
-                    fScore[i, j] = double.PositiveInfinity;
-                }
-            }
+            var gScore = new PointDictioinary<double>(maze.Width, maze.Height, double.PositiveInfinity);
+            var fScore = new PointDictioinary<double>(maze.Width, maze.Height, double.PositiveInfinity);
             gScore[start] = 0;
 
             var closedSet = new BinaryMatrix(maze.Width, maze.Height);
@@ -73,21 +62,20 @@ namespace SolveMaze
             openSet[start] = 1;
 
             int count = 0;
-            double percentage = 0;
-            double prev_percentage = 0;
+            int percentage = 0;
+            int prev_percentage = 0;
             while (!queue.IsEmpty())
             {
                 Point current = (queue.Dequeue()).Point;
                 openSet[current] = 0;
                 closedSet[current] = 1;
 
-
                 count++;
-                if (count % 100 == 0)
+                percentage = count * 100 / (maze.Width * maze.Height);
+                if (percentage - prev_percentage > 1)
                 {
-                    percentage = count * 100.0 / (maze.Width * maze.Height);
-                    if (percentage - prev_percentage > 1)
-                        Console.WriteLine(percentage.ToString("F") + "% of the pixels have been processed.");
+                    Console.WriteLine(percentage.ToString() + "% of the pixels have been processed.");
+                    prev_percentage = percentage;
                 }
 
                 if (current.Equals(goal))
@@ -97,14 +85,14 @@ namespace SolveMaze
                     return;
                 }
 
-                foreach (Size delta in deltas)
+                var neighbors = current.Neighbors();
+                foreach (Point neighbor in neighbors)
                 {
-                    Point neighbor = current + delta;
-
+                    
                     int x = neighbor.X;
                     int y = neighbor.Y;
 
-                    if (x < 0 || x >= maze.Width || y < 0 || y >= maze.Height)
+                    if (neighbor.IsOutSide(maze.Width, maze.Height))
                         continue;
 
                     if (closedSet[neighbor] == 1)
@@ -162,9 +150,9 @@ namespace SolveMaze
             Console.WriteLine("Solution is saved.");
         }
 
-        private BinaryMatrix Preprocess(out Point start, out Point goal)
+        private PointDictioinary<int> Preprocess(out Point start, out Point goal)
         {
-            var result = new BinaryMatrix(sourceImage.Width, sourceImage.Height);
+            var result = new PointDictioinary<int>(sourceImage.Width, sourceImage.Height);
             bool start_found = false, goal_found = false;
             for (int x = 0; x < sourceImage.Width; x++)
             {
@@ -172,25 +160,29 @@ namespace SolveMaze
                 {
                     Color c = sourceImage.GetPixel(x, y);
                     if (c.IsTheColorSameAs(Color.Black))
-                    {
                         result[x, y] = 1;
-                    }
                     else
                     {
-                        result[x, y] = 0;
                         if (c.IsTheColorSameAs(Color.Blue))
                         {
-                            goal = new Point(x, y);
-                            goal_found = true;
+                            if (!goal_found)
+                            {
+                                goal = new Point(x, y);
+                                goal_found = true;
+                            }
+                            result[x, y] = 2;
                         }
                         else if (c.IsTheColorSameAs(Color.Red))
                         {
-                            start = new Point(x, y);
-                            start_found = true;
+                            if (!start_found)
+                            {
+                                start = new Point(x, y);
+                                start_found = true;
+                            }
+                            result[x, y] = 3;
                         }
+                        result[x, y] = 0;
                     }
-                    if (start_found && goal_found)
-                        break;
                 }
             }
             return result;
