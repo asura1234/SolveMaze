@@ -93,9 +93,10 @@ namespace SolveMaze
 
                 count++;
                 percentage = count * 100 / (Width * Height);
+                sourceImage.DrawPoint(current, Color.Yellow);
                 if (percentage - prev_percentage > 1)
                 {
-                    Console.WriteLine(percentage.ToString() + "% of the pixels have been processed.");
+                    Console.WriteLine(percentage.ToString() + "% of the total pixels were processed.");
                     prev_percentage = percentage;
                 }
 
@@ -125,7 +126,7 @@ namespace SolveMaze
                         openSet[neighbor] = 1;
                     }
 
-                    double tentative_gScore = gScore[current] + DistanceBetween(current, neighbor);
+                    double tentative_gScore = gScore[current] + 1;
                     if (tentative_gScore >= gScore[neighbor])
                         continue;
                     
@@ -139,17 +140,12 @@ namespace SolveMaze
             return;
         }
 
-        private double DistanceBetween(Point a, Point b)
+        private double HeuristicCostEstimate(Point a, Point b)
         {
             int dx = Math.Abs(a.X - b.X);
             int dy = Math.Abs(a.Y - b.Y);
 
             return dx + dy;
-        }
-
-        private double HeuristicCostEstimate(Point current, Point goal)
-        {
-            return DistanceBetween(current, goal);
         }
 
         // based on the pseudocode provided on Wikipedia for A* search algorithm
