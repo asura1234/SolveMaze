@@ -1,110 +1,156 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 
 namespace SolveMaze
 {
-    public class PNode : IComparable<PNode>
+    public class AStarSearch
     {
-        public Node node;
-        public double fScore;
+        private Bitmap sourceImage;
+        string solutionImageName;
+        int Width, Height;
+        Preprocessor preprocessor;
+        PointDictioinary<short> maze;
+        PointDictioinary<uint> distanceMatrix;
 
-        public PNode(Node node, double score)
+        static Size[] deltas = new Size[] { new Size(0, 1), new Size(0, -1), new Size(1, 0), new Size(-1, 0) };
+
+        public AStarSearch(string sourceImageName, string solutionImageName)
         {
-            this.node = node;
-            fScore = score;
+            sourceImage = new Bitmap(sourceImageName);
+            preprocessor = new Preprocessor(sourceImage);
+            Width = preprocessor.Width;
+            Height = preprocessor.Height;
+            maze = preprocessor.maze;
+            distanceMatrix = preprocessor.distanceMatrix;
         }
 
-        public int CompareTo(PNode other)
+        private class Node : IComparable<Node>
         {
-            if (this.fScore < other.fScore)
-                return -1;
-            else if (this.fScore > other.fScore)
-                return 1;
-            else
-                return 0;
-        }
-    }
+            public Point Point;
+            public double fScore;
 
-    // based on the pseudocode provided on Wikipedia for A* search algorithm
-    // https://en.wikipedia.org/wiki/A*_search_algorithm#Pseudocode
-    public static class AStarSearch
-    {
-        public static Point[] AStar(this Graph graph, Node start, Node goal)
-        {
-            Dictionary<Node, Node> cameFrom = new Dictionary<Node, Node>();
-            Dictionary<Node, double> gScore = new Dictionary<Node, double>();
-            Dictionary<Node, double> fScore = new Dictionary<Node, double>();
-
-            foreach (Node node in graph.Nodes)
+            public Node(Point pos, double score)
             {
-                gScore.Add(node, double.PositiveInfinity);
-                fScore.Add(node, double.PositiveInfinity);
+                Point = pos;
+                fScore = score;
+            }
+
+            public int CompareTo(Node other)
+            {
+                if (this.fScore < other.fScore)
+                    return -1;
+                else if (this.fScore > other.fScore)
+                    return 1;
+                else
+                    return 0;
+            }
+
+            public bool Equals(Point other)
+            {
+                return Point.X == other.X && Point.Y == other.Y;
+            }
+        }
+
+        // based on the pseudocode provided on Wikipedia for A* search algorithm
+        // https://en.wikipedia.org/wiki/A*_search_algorithm#Pseudocode
+        public void Search()
+        {
+            Point start = preprocessor.Start;
+            var cameFrom = new PointDictioinary<Point>(maze.Width, maze.Height);
+            var gScore = new PointDictioinary<double>(maze.Width, maze.Height);
+            var fScore = new PointDictioinary<double>(maze.Width, maze.Height);
+
+            for (int i = 0; i < maze.Width; i++)
+            {
+                for (int j = 0; j < maze.Height; j++)
+                {
+                    gScore[i, j] = double.PositiveInfinity;
+                    fScore[i, j] = double.PositiveInfinity;
+                }
             }
             gScore[start] = 0;
 
-            List<Node> closedSet = new List<Node>();
-            PriorityQueue<PNode> openSet = new PriorityQueue<PNode>();
-            openSet.Enqueue(new PNode(start, fScore[start]));
+            var closedSet = new BinaryMatrix(maze.Width, maze.Height);
+            var openSet = new BinaryMatrix(maze.Width, maze.Height);
+            var queue = new PriorityQueue<Node>();
 
-            while (!openSet.IsEmpty())
+            queue.Enqueue(new Node(start, fScore[start]));
+            openSet[start] = 1;
+
+            int count = 0;
+            double percentage = 0;
+            double prev_percentage = 0;
+            while (!queue.IsEmpty())
             {
-                Node current = (openSet.Dequeue()).node;
-                if (current.Equals(goal))
-                    return ReconstructPath(graph, cameFrom, current);
-                closedSet.Add(current);
+                Point current = (queue.Dequeue()).Point;
+                openSet[current] = 0;
+                closedSet[current] = 1;
 
-                foreach (Node neighbor in current.Neighbors)
+                count++;
+                if (count % 100 == 0)
                 {
-                    if (closedSet.Contains(neighbor))
+                    percentage = count * 100.0 / (maze.Width * maze.Height);
+                    if (percentage - prev_percentage > 1)
+                        Console.WriteLine(percentage.ToString("F") + "% of the pixels have been searched.");
+                }
+
+                if (maze[current] == 2)
+                {
+                    Console.WriteLine("Pathfinding complete.");
+                    ReconstructPath(cameFrom, current);
+                    return;
+                }
+
+                foreach (Size delta in deltas)
+                {
+                    Point neighbor = current + delta;
+
+                    int x = neighbor.X;
+                    int y = neighbor.Y;
+
+                    if (x < 0 || x >= maze.Width || y < 0 || y >= maze.Height)
                         continue;
 
-                    PNode neighborPNode = new PNode(neighbor, fScore[neighbor]);
-                    if (!openSet.Contains(neighborPNode))
-                        openSet.Enqueue(neighborPNode);
+                    if (closedSet[neighbor] == 1)
+                        continue;
 
-                    double tentative_gScore = gScore[current] + graph.FindPath(current, neighbor).Cost;
+                    if (maze[x, y] == 1)
+                        continue;
+
+                    var neighborNode = new Node(neighbor, fScore[neighbor]);
+                    if (openSet[neighbor] != 1)
+                    {
+                        queue.Enqueue(neighborNode);
+                        openSet[neighbor] = 1;
+                    }
+
+                    double tentative_gScore = gScore[current] + 1;
                     if (tentative_gScore >= gScore[neighbor])
                         continue;
 
                     cameFrom[neighbor] = current;
                     gScore[neighbor] = tentative_gScore;
-                    fScore[neighbor] = gScore[neighbor] + HeuristicCostEstimate(neighbor, goal);
+                    fScore[neighbor] = gScore[neighbor] + distanceMatrix[neighbor];
                 }
             }
-            return new Point[0];
+            Console.WriteLine("Pathfinding failed.");
+            return;
         }
 
-        private static double DistanceBetween(Point a, Point b)
+        // based on the pseudocode provided on Wikipedia for A* search algorithm
+        // https://en.wikipedia.org/wiki/A*_search_algorithm#Pseudocode
+        private void ReconstructPath(PointDictioinary<Point> cameFrom, Point current)
         {
-            return Math.Sqrt((a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y));
-        }
-
-        private static double HeuristicCostEstimate(Node current, Node goal)
-        {
-            return DistanceBetween(current.Position, goal.Position);
-        }
-
-        private static Point[] ReconstructPath(Graph graph, Dictionary<Node, Node> cameFrom, Node current)
-        {
-            List<Point> totalPath = new List<Point>();
-            totalPath.Add(current.Position);
+            Console.WriteLine("Drawing solution ...");
+            sourceImage.DrawPoint(current, Color.Green);
 
             while (cameFrom.ContainsKey(current))
             {
-                Node previous = current;
                 current = cameFrom[current];
-
-                Point[] path = graph.FindPathPoints(previous, current);
-                for (int i = 0; i < path.Length; i++)
-                    totalPath.Add(path[i]);
-
-                totalPath.Add(current.Position);
+                sourceImage.DrawPoint(current, Color.Green);
             }
-            Point[] results = new Point[totalPath.Count - 2];
-            totalPath.CopyTo(1, results, 0, totalPath.Count - 2);
-            return results;
+            sourceImage.Save(solutionImageName);
+            Console.WriteLine("Solution is saved.");
         }
-
     }
 }

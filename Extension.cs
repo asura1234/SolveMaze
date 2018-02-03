@@ -5,28 +5,24 @@ namespace SolveMaze
 {
     public static class Extension
     {
-        public static Color GetPixel(this Bitmap map, Point pos)
-        {
-            return map.GetPixel(pos.X, pos.Y);
-        }
-
-        public static bool IsTheSameAs(this Color a, Color b)
+        public static bool IsTheColorSameAs(this Color a, Color b)
         {
             return a.ToArgb() == b.ToArgb();
         }
 
-        public static void DrawPoint(this Graphics graphics, Point p, Color c)
+        public static void DrawPoint(this Bitmap map, Point p, Color c)
         {
-            Pen myPen = new Pen(c, 1);
-            graphics.FillRectangle(myPen.Brush, p.X, p.Y, 1, 1);
+            map.SetPixel(p.X, p.Y, c);
         }
 
-        public static void DrawPoints(this Graphics graphics, Point[] ps, Color c)
+        public static bool IsInside(this Point p, int Width, int Height)
         {
-            for (int i = 0; i < ps.Length; i++)
-            {
-                graphics.DrawPoint(ps[i], c);
-            }
+            return p.X > 0 && p.X < Width && p.Y > 0 && p.Y < Height;
+        }
+
+        public static bool IsWall(this Bitmap map, Point p)
+        {
+           return  map.GetPixel(p.X, p.Y).IsTheColorSameAs(Color.Black);
         }
     }
 }

@@ -38,11 +38,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PriorityQueque.cs" />
     <Compile Include="AStarSearch.cs" />
-    <Compile Include="Preprocess.cs" />
-    <Compile Include="Graph.cs" />
     <Compile Include="Extension.cs" />
-    <Compile Include="BitmapToUndirectedGraphConverter.cs" />
-    <Compile Include="ImageProcessing.cs" />
+    <Compile Include="PointDictioinary.cs" />
+    <Compile Include="Preprocessor.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />
