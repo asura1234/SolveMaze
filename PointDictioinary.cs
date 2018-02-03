@@ -8,11 +8,13 @@ namespace SolveMaze
         private bool[,] data;
         public int Width;
         public int Height;
+        public int Count;
 
         public BinaryMatrix(int width, int height)
         {
             this.Width = width;
             this.Height = height;
+            Count = 0;
             data = new bool[width, height];
             for (int i = 0; i < width; i++)
             {
@@ -37,7 +39,10 @@ namespace SolveMaze
                 if (value == 0)
                     data[p.X, p.Y] = false;
                 else
+                {
                     data[p.X, p.Y] = true;
+                    Count++;
+                }
             }
         }
 
@@ -54,7 +59,10 @@ namespace SolveMaze
                 if (value == 0)
                     data[x, y] = false;
                 else
+                {
                     data[x, y] = true;
+                    Count++;
+                }
             }
         }
     }

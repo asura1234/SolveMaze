@@ -1,21 +1,22 @@
 ﻿using System;
 using System.Drawing;
+using System.Collections.Generic;
 
 
 namespace SolveMaze
 {
     public class Preprocessor
     {
-        BinaryMatrix visited;
-        static Size[] deltas = new Size[] { new Size(0, 1), new Size(0, -1), new Size(1, 0), new Size(-1, 0) };
+        static short EMPTY = 0, WALL = 1, START = 2, GOAL = 3;
+
         Bitmap myMap;
-        int count = 0;
+        uint count = 0;
         double percentage = 0;
         double prev_percentage = 0;
 
         public int Width, Height;
         public PointDictioinary<short> maze;
-        public PointDictioinary<uint> distanceMatrix;
+        public PointDictioinary<double> distanceMatrix;
         public Point Start;
         public Point Goal;
 
@@ -24,8 +25,7 @@ namespace SolveMaze
             this.myMap = sourceImage;
             this.Width = myMap.Width;
             this.Height = myMap.Height;
-            visited = new BinaryMatrix(Width, Height);
-            distanceMatrix = new PointDictioinary<uint>(Width, Height, uint.MaxValue);
+            distanceMatrix = new PointDictioinary<double>(Width, Height, double.PositiveInfinity);
             maze = new PointDictioinary<short>(Width, Height, 0);
 
             FingStartNGoal(out Start, out Goal);
@@ -45,7 +45,7 @@ namespace SolveMaze
                     Point p = new Point(x, y);
                     Color c = myMap.GetPixel(x, y);
                     if (c.IsTheColorSameAs(Color.Black))
-                        maze[x, y] = 1;
+                        maze[p] = WALL;
                     else
                     {
                         if (c.IsTheColorSameAs(Color.Red))
@@ -55,8 +55,8 @@ namespace SolveMaze
                                 goal = p;
                                 found_goal = true;
                             }
-                            distanceMatrix[x, y] = 0;
-                            maze[x, y] = 2;
+                            distanceMatrix[p] = 0;
+                            maze[p] = GOAL;
                         }
                         else if (c.IsTheColorSameAs(Color.Blue))
                         {
@@ -65,57 +65,75 @@ namespace SolveMaze
                                 start = p;
                                 found_start = true;
                             }
-                            maze[x, y] = 3;
+                            maze[p] = START;
                         }
                         else
-                            maze[x, y] = 0;
+                            maze[p] = EMPTY;
                     }
                 }
             }
         }
 
-        private void TraverseMap(Point current)
+
+        private void TraverseMap(Point start)
         {
-            // mark current as visited
-            visited[current] = 1;
+            Queue<Point> queue = new Queue<Point>();
+            BinaryMatrix openSet = new BinaryMatrix(Width, Height);
+            BinaryMatrix closedSet = new BinaryMatrix(Width, Height);
 
-            foreach (Size delta in deltas)
+            queue.Enqueue(start);
+            openSet[start] = 1;
+
+            while (queue.Count != 0)
             {
-                Point neighbor = current + delta;
-                // if ias been visited then stop
-                if (visited[neighbor] == 1)
-                    continue;
-
-                // is outside the image
-                if (!neighbor.IsInside(Width, Height))
-                    continue;
+                var current = queue.Dequeue();
+                openSet[current] = 0;
+                closedSet[current] = 1;
 
                 count++;
-                percentage = count * 100.0 / (Width * Height);
+                percentage = count * 100 / (maze.Width * maze.Height);
                 if (percentage - prev_percentage > 1)
-                {
-                    Console.WriteLine(percentage.ToString("F") + "% of the pixels have been preprocessed.");
-                    prev_percentage = percentage;
-                }
+                    Console.WriteLine(percentage.ToString("F") + "% of the pixels have been pre-processed.");
 
-                // hit a wall
-                if (maze[neighbor] == 1)
-                {
-                    visited[neighbor] = 1;
-                    continue;
-                }
+                var neighbors = current.Neighbors();
 
-                // it is not inside the goal, then it is always 0
-                if (maze[neighbor] != 2)
+                foreach (Point neighbor in neighbors)
                 {
-                    // calculate the distance from the goal to here
-                    var pre_distance = distanceMatrix[neighbor];
-                    var new_distance = distanceMatrix[current] + 1;
-                    if (new_distance < pre_distance)
-                        distanceMatrix[neighbor] = new_distance;
+                    // if it is outside the image, then stop
+                    if (neighbor.IsOutside(Width, Height))
+                        continue;
+                    
+                    // if it has been visited then stop
+                    if (closedSet[neighbor] == 1)
+                        continue;
+
+                    if (maze[neighbor] == WALL)
+                    {
+                        distanceMatrix[neighbor] = double.PositiveInfinity;
+                        continue;
+                    }
+
+                    if (maze[neighbor] == GOAL)
+                    {
+                        distanceMatrix[neighbor] = 1;
+                        continue;
+                    }
+
+                    if (openSet[neighbor] == 0)
+                        queue.Enqueue(neighbor);
+                    
+                    if (maze[neighbor] != GOAL)
+                    {
+                        // calculate the distance from the goal to here
+                        var pre_distance = distanceMatrix[neighbor];
+                        var new_distance = distanceMatrix[current] + 1;
+                        if (new_distance < pre_distance)
+                            distanceMatrix[neighbor] = new_distance;
+                    }
                 }
-                TraverseMap(neighbor);
             }
         }
+
+
     }
 }
