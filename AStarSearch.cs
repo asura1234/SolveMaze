@@ -77,12 +77,14 @@ namespace SolveMaze
             var openSet = new BinaryMatrix(Width, Height);
             var queue = new PriorityQueue<Node>();
 
-            queue.Enqueue(new Node(start, fScore[start]));
+            var startNode = new Node(start, gScore[start] + HeuristicCostEstimate(start, goal));
+            queue.Enqueue(startNode);
             openSet[start] = 1;
 
             int count = 0;
             int percentage = 0;
             int prev_percentage = 0;
+            Point last = start;
             while (!queue.IsEmpty())
             {
                 Point current = (queue.Dequeue()).Point;
@@ -104,9 +106,12 @@ namespace SolveMaze
                     return;
                 }
 
-                var neighbors = current.Neighbors(sourceImage, 4);
+                var neighbors = current.Neighbors();
                 foreach (Point neighbor in neighbors)
                 {
+                    if (neighbor.IsOutSide(0, 0, Width, Height))
+                        continue;
+
                     if (closedSet[neighbor] == 1)
                         continue;
 
@@ -116,17 +121,18 @@ namespace SolveMaze
                     var neighborNode = new Node(neighbor, fScore[neighbor]);
                     if (openSet[neighbor] != 1)
                     {
-                        queue.Enqueue(neighborNode);
+                        queue.Enqueue(ref neighborNode);
                         openSet[neighbor] = 1;
                     }
 
                     double tentative_gScore = gScore[current] + DistanceBetween(current, neighbor);
-                    if (tentative_gScore > gScore[neighbor])
+                    if (tentative_gScore >= gScore[neighbor])
                         continue;
-
+                    
                     cameFrom[neighbor] = current;
                     gScore[neighbor] = tentative_gScore;
                     fScore[neighbor] = gScore[neighbor] + HeuristicCostEstimate(neighbor, goal);
+                    neighborNode.fScore = fScore[neighbor];
                 }
             }
             Console.WriteLine("Pathfinding failed.");
@@ -135,10 +141,10 @@ namespace SolveMaze
 
         private double DistanceBetween(Point a, Point b)
         {
-            int dx = a.X - b.X;
-            int dy = a.Y - b.Y;
+            int dx = Math.Abs(a.X - b.X);
+            int dy = Math.Abs(a.Y - b.Y);
 
-            return Math.Sqrt(dx * dx + dy * dy);
+            return dx + dy;
         }
 
         private double HeuristicCostEstimate(Point current, Point goal)
@@ -153,7 +159,6 @@ namespace SolveMaze
             Console.WriteLine("Drawing solution ...");
             sourceImage.DrawPoint(current, Color.Green);
 
-            Point last;
             while (cameFrom.ContainsKey(current))
             {
                 current = cameFrom[current];

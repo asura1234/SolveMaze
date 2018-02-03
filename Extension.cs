@@ -75,31 +75,14 @@ namespace SolveMaze
             return false;
         }
 
-        public static Point[] Neighbors(this Point current, Bitmap map, int windowSize)
+        public static Point[] Neighbors(this Point p)
         {
-            List<Point> neighbors = new List<Point>();
-            int x = 1, y = 0, dx = 0, dy = -1;
-            for (int i = 0; i < windowSize * windowSize; i++)
+            Point[] neighbors = new Point[deltas.Length];
+            for (int i = 0; i < deltas.Length; i++)
             {
-                if (x > -windowSize/2 && x < windowSize/2 && y > -windowSize/2 && y < windowSize/2)
-                {
-                    var neighbor = new Point(current.X + x, current.Y + y);
-                    if (IsInside(neighbor, 0, 0, map.Width, map.Height))
-                        continue;
-                    if (map.IsWall(neighbor))
-                        neighbors.Add(neighbor);
-                    else if (i > 8)
-                        break;
-                }
-                if (x == y || (x < 0 && x == -y) || (x > 0 && x == 1 - y))
-                {
-                    dx = -dy;
-                    dy = dx;
-                }
-                x = x + dx;
-                y = y + dy;
+                neighbors[i] = new Point(p.X, p.Y) + deltas[i];
             }
-            return neighbors.ToArray();
+            return neighbors;
         }
 
 
