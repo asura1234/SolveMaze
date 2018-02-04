@@ -31,7 +31,6 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
-    <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
@@ -43,6 +42,7 @@
     <Compile Include="Vector2D.cs" />
     <Compile Include="Node.cs" />
     <Compile Include="BinaryMatrix.cs" />
+    <Compile Include="Exceptions.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />
@@ -54,7 +54,6 @@
     <EmbeddedResource Include="Resources\maze1.png" />
     <EmbeddedResource Include="Resources\maze2.png" />
     <EmbeddedResource Include="Resources\maze3.png" />
-    <EmbeddedResource Include="Resources\maze0.png" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

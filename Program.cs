@@ -10,6 +10,12 @@ namespace SolveMaze
 
         public static void Main(string[] args)
         {
+            if (args == null || args.Length != 2)
+            {
+                Console.WriteLine("Improper input arguments.");
+                return;
+            }
+
             string sourceName = args[0];
             string destinationName = args[1];
 

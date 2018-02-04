@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Drawing;
 using System.Collections.Generic;
 
@@ -17,10 +18,25 @@ namespace SolveMaze
 
         public AStarSearch(string sourceImageName, string solutionImageName)
         {
-            this.sourceImage = new Bitmap(sourceImageName);
+            if (CheckFileFormat(sourceImageName) && CheckFileFormat(solutionImageName))
+                throw new FileFormatNotSupportedException("File format not supported. This program only supports .png, .jpg and .bmp");
+            
+            try
+            {
+                this.sourceImage = new Bitmap(sourceImageName);
+            }
+            catch(FileNotFoundException e)
+            {
+                Console.WriteLine(e.Message);
+            }
             this.solutionImageName = solutionImageName;
             this.Width = sourceImage.Width;
             this.Height = sourceImage.Height;
+        }
+
+        private bool CheckFileFormat(string fileName)
+        {
+            return fileName.Contains(".png") || fileName.Contains(".jpg") || fileName.Contains(".bmp");
         }
 
         // The following code is based on the pseudocode on Wikipedia for A* search algorithm
@@ -31,12 +47,12 @@ namespace SolveMaze
         // Dylan Liu moved the fScore and gScore calculation ahead of adding the neighbor to the open set to avoid passing reference, 
         // because it is uncommon and negatively affect performance to pass reference in C#.
 
-        public void SearchSolution(int solutionLineThickness = 1)
+        public bool SearchSolution(int solutionLineThickness = 1)
         {
             if (sourceImage == null)
             {
-                Console.WriteLine("Maze Image is not loaded.");
-                return;
+                Console.WriteLine("Source image is not loaded.");
+                return false;
             }
 
             // find the start and goal pixel from the source image
@@ -44,7 +60,7 @@ namespace SolveMaze
             if (!success)
             {
                 Console.WriteLine("Start and goal are not found.");
-                return;
+                return false;
             }
 
             // The set of nodes already evaluated
@@ -88,8 +104,8 @@ namespace SolveMaze
                 }
                 if (count > Width * Height) // It's impossible to visit all the pixels and yet still no solution.
                 {
-                    Console.WriteLine("Pathfinding is terminated due to either repeat visit to the same pixels or there is no solution.");
-                    return;
+                    Console.WriteLine("Pathfinding is terminated due to either repeat visit to the same pixels.");
+                    return false;
                 }
                 #endregion
 
@@ -101,7 +117,7 @@ namespace SolveMaze
                 {
                     Console.WriteLine("Pathfinding complete.");
                     ReconstructPath(cameFrom, current, solutionLineThickness);
-                    return;
+                    return true;
                 }
 
                 var neighbors = current.Neighbors();
@@ -134,7 +150,8 @@ namespace SolveMaze
                     }
                 }
             }
-            Console.WriteLine("Pathfinding failed.");
+            Console.WriteLine("Pathfinding failed. There is no solution to this maze.");
+            return false;
         }
 
         private double HeuristicCostEstimate(Vector2D a, Vector2D b)
@@ -188,6 +205,10 @@ namespace SolveMaze
                             start_found = true;
                         }
                     }
+                    else if (!sourceImage.IsEmptySpace(p))
+                    {
+                        throw new ImproperMazeImageException("This is not a proper maze image. A proper maze image only contains red, white, blue and black color.");
+                    }
 
                     // once a start and a goal is found, terminate the process
                     if (goal_found && start_found)
@@ -197,6 +218,9 @@ namespace SolveMaze
                     }
                 }
             }
+
+            if (!goal_found || !start_found)
+                throw new StartOrGoalNotFoundException("Start and goal are not found.");
             return false; // no start or goal is found
         }
 
