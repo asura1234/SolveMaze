@@ -14,7 +14,7 @@ namespace SolveMaze
             string destinationName = args[1];
 
             var astar = new AStarSearch(sourceName, destinationName);
-            astar.Search();
+            astar.Search(3);
             return;
         }
     }

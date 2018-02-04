@@ -39,15 +39,16 @@
     <Compile Include="PriorityQueque.cs" />
     <Compile Include="AStarSearch.cs" />
     <Compile Include="Extension.cs" />
-    <Compile Include="PointDictioinary.cs" />
+    <Compile Include="Map.cs" />
+    <Compile Include="Vector2D.cs" />
+    <Compile Include="Node.cs" />
+    <Compile Include="BinaryMatrix.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Engineering_Technical_Exercise_-_Maze.doc" />
-    <None Include="Resources\maze11.png" />
-    <None Include="Resources\maze12.png" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\maze1.png" />
