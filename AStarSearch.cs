@@ -31,7 +31,7 @@ namespace SolveMaze
         // Dylan Liu moved the fScore and gScore calculation ahead of adding the neighbor to the open set to avoid passing reference, 
         // because it is uncommon and negatively affect performance to pass reference in C#.
 
-        public void Search(int solutionLineThickness = 1)
+        public void SearchSolution(int solutionLineThickness = 1)
         {
             if (sourceImage == null)
             {
