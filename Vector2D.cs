@@ -1,4 +1,6 @@
-﻿using System;
+﻿// copyright Dylan Liu
+
+using System;
 namespace SolveMaze
 {
     public class Vector2D

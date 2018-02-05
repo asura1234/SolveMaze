@@ -1,4 +1,6 @@
-﻿using System;
+﻿// copyright Dylan Liu
+
+using System;
 using System.IO;
 using System.Drawing;
 using System.Collections.Generic;

@@ -1,4 +1,6 @@
-﻿using System;
+﻿// copyright Dylan Liu
+
+using System;
 using System.Collections.Generic;
 
 namespace SolveMaze
