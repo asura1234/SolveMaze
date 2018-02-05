@@ -8,30 +8,33 @@ namespace SolveMaze
     public class AStarSearch
     {
         private Bitmap sourceImage;
-        string solutionImageName;
+        string sourceImageName, solutionImageName;
         int Width, Height;
         Vector2D start, goal;
 
         int count = 0;
         int percentage = 0;
         int prev_percentage = 0;
+        bool isDebugOn;
 
-        public AStarSearch(string sourceImageName, string solutionImageName)
+        public AStarSearch(string sourceImageName, string solutionImageName, bool isDebugOn = false)
         {
-            if (CheckFileFormat(sourceImageName) && CheckFileFormat(solutionImageName))
+            if (!CheckFileFormat(sourceImageName) || !CheckFileFormat(solutionImageName))
                 throw new FileFormatNotSupportedException("File format not supported. This program only supports .png, .jpg and .bmp");
             
             try
             {
                 this.sourceImage = new Bitmap(sourceImageName);
             }
-            catch(FileNotFoundException e)
+            catch(ArgumentException e)
             {
-                Console.WriteLine(e.Message);
+                throw new FileNotFoundException("Source Image: " + sourceImageName + " is not found.");
             }
             this.solutionImageName = solutionImageName;
+            this.sourceImageName = sourceImageName;
             this.Width = sourceImage.Width;
             this.Height = sourceImage.Height;
+            this.isDebugOn = isDebugOn;
         }
 
         private bool CheckFileFormat(string fileName)
@@ -51,17 +54,14 @@ namespace SolveMaze
         {
             if (sourceImage == null)
             {
-                Console.WriteLine("Source image is not loaded.");
+                Console.WriteLine("Source image: " + sourceImageName + " is not loaded.");
                 return false;
             }
 
             // find the start and goal pixel from the source image
-            bool success = FindStartNGoal();
+            var success = FindStartNGoal();
             if (!success)
-            {
-                Console.WriteLine("Start and goal are not found.");
                 return false;
-            }
 
             // The set of nodes already evaluated
             var closedSet = new BinaryMatrix(Width, Height);
@@ -95,13 +95,17 @@ namespace SolveMaze
             {
                 #region Code for showing search progress and debug purposes
                 count++;
-                percentage = count * 100 / (Width * Height);
-                //sourceImage.DrawPoint(current, Color.Yellow); // draw all the pixels that haven been visited
-                if (percentage - prev_percentage > 1)
+                if (isDebugOn)
                 {
-                    Console.WriteLine(percentage.ToString() + "% of the total pixels were processed.");
-                    prev_percentage = percentage;
+                    percentage = count * 100 / (Width * Height);
+                    //sourceImage.DrawPoint(current, Color.Yellow); // draw all the pixels that haven been visited
+                    if (percentage - prev_percentage > 1)
+                    {
+                        Console.WriteLine(percentage.ToString() + "% of the total pixels were processed.");
+                        prev_percentage = percentage;
+                    }
                 }
+
                 if (count > Width * Height) // It's impossible to visit all the pixels and yet still no solution.
                 {
                     Console.WriteLine("Pathfinding is terminated due to either repeat visit to the same pixels.");
@@ -115,7 +119,8 @@ namespace SolveMaze
 
                 if (current == goal)
                 {
-                    Console.WriteLine("Pathfinding complete.");
+                    if (isDebugOn)
+                        Console.WriteLine("Pathfinding complete.");
                     ReconstructPath(cameFrom, current, solutionLineThickness);
                     return true;
                 }
@@ -129,10 +134,10 @@ namespace SolveMaze
                     if (closedSet[neighbor] == 1)
                         continue; // Ignore the neighbor which is already evaluated.
 
-                    if (sourceImage.IsWall(neighbor))
+                    if (sourceImage.GetPixel(neighbor.x, neighbor.y).IsWall())
                         continue; // Ignore the neighbor which is a wall
-                    
-                    double tentative_gScore = gScore[current] + Vector2D.DistanceBetween(current, neighbor); // in this case, distance between current and neight is always 1
+
+                    double tentative_gScore = gScore[current] + 1; // in this case, distance between current and neight is always 1, in other cases use Vector2D.DistanceBetween(current, neighbor);
                     if (tentative_gScore < gScore[neighbor])
                     {
                         // This path is the best until now. Record it!
@@ -150,7 +155,8 @@ namespace SolveMaze
                     }
                 }
             }
-            Console.WriteLine("Pathfinding failed. There is no solution to this maze.");
+            if (isDebugOn)
+                Console.WriteLine("Pathfinding failed. There is no solution to this maze.");
             return false;
         }
 
@@ -160,13 +166,15 @@ namespace SolveMaze
             int dy = Math.Abs(a.y - b.y);
 
             return dx + dy;
+            //return Vector2D.DistanceBetween(a, b);
         }
 
         // based on the pseudocode provided on Wikipedia for A* search algorithm
         // https://en.wikipedia.org/wiki/A*_search_algorithm#Pseudocode
         private void ReconstructPath(Map<Vector2D> cameFrom, Vector2D current, int thickness=1)
         {
-            Console.WriteLine("Drawing solution ...");
+            if (isDebugOn)
+                Console.WriteLine("Drawing solution ...");
             sourceImage.DrawPoint(current, Color.Green, thickness);
 
             while (cameFrom.ContainsKey(current))
@@ -176,7 +184,8 @@ namespace SolveMaze
             }
 
             sourceImage.Save(solutionImageName);
-            Console.WriteLine("Solution is saved.");
+            if (isDebugOn)
+                Console.WriteLine("Solution is saved.");
         }
 
         private bool FindStartNGoal()
@@ -187,9 +196,10 @@ namespace SolveMaze
                 for (int y = 0; y < sourceImage.Height; y++)
                 {
                     Vector2D p = new Vector2D(x, y);
-                    if (sourceImage.IsWall(p))
+                    Color c = sourceImage.GetPixel(x, y);
+                    if (c.IsWall())
                         continue;
-                    else if (sourceImage.IsGoal(p))
+                    else if (c.IsGoal())
                     {
                         if (!goal_found)
                         {
@@ -197,7 +207,7 @@ namespace SolveMaze
                             goal_found = true;
                         }
                     }
-                    else if (sourceImage.IsStart(p))
+                    else if (c.IsStart())
                     {
                         if (!start_found)
                         {
@@ -205,15 +215,14 @@ namespace SolveMaze
                             start_found = true;
                         }
                     }
-                    else if (!sourceImage.IsEmptySpace(p))
-                    {
+                    else if (c.G - c.B > 50 || c.G - c.R > 50) // this is a rather crude way to tell if the source image is a proper maze
                         throw new ImproperMazeImageException("This is not a proper maze image. A proper maze image only contains red, white, blue and black color.");
-                    }
 
                     // once a start and a goal is found, terminate the process
                     if (goal_found && start_found)
                     {
-                        Console.WriteLine("Found start and goal point.");
+                        if (isDebugOn)
+                            Console.WriteLine("Found start and goal point.");
                         return true;
                     }
                 }

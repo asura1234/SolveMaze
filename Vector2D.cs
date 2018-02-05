@@ -29,21 +29,15 @@ namespace SolveMaze
             return v1.x == v2.x && v1.y == v2.y;
         }
 
-        public static double DistanceBetween(Vector2D v1, Vector2D v2)
-        {
-            int dx = v2.x - v1.x;
-            int dy = v2.y - v1.x;
-            return Math.Sqrt(dx * dx + dy * dy);
-        }
-
-        public bool Equals(Vector2D other)
-        {
-            return this == other;
-        }
-
         public static bool operator !=(Vector2D v1, Vector2D v2)
         {
             return v1.x != v2.x || v1.y != v2.y;
+        }
+        public static double DistanceBetween(Vector2D v1, Vector2D v2)
+        {
+            int dx = v2.x - v1.x;
+            int dy = v2.y - v1.y;
+            return Math.Sqrt(dx * dx + dy * dy);
         }
 
         public Vector2D[] Neighbors()

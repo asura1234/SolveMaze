@@ -7,11 +7,7 @@ namespace SolveMaze
     {
         public static bool IsTheColorSameAs(this Color a, Color b)
         {
-            var dr = a.R - b.R;
-            var dg = a.G - b.G;
-            var db = a.B - b.B;
-            var distance = Math.Sqrt(dr * dr + dg * dg + db * db);
-            return distance < 32;
+            return a.ToArgb() == b.ToArgb();
         }
 
         public static void DrawPoint(this Bitmap map, Vector2D p, Color c, int size = 1)
@@ -36,24 +32,19 @@ namespace SolveMaze
                           radius + radius, radius + radius);
         }
 
-        public static bool IsWall(this Bitmap map, Vector2D p)
+        public static bool IsWall(this Color c)
         {
-            return map.GetPixel(p.x, p.y).IsTheColorSameAs(Color.Black);
+            return c.R < 64 && c.G < 64 && c.B < 64;
         }
 
-        public static bool IsStart(this Bitmap map, Vector2D p)
+        public static bool IsStart(this Color c)
         {
-            return map.GetPixel(p.x, p.y).IsTheColorSameAs(Color.Blue);
+            return c.R < 32 && c.G < 32 && c.B > 220;
         }
 
-        public static bool IsGoal(this Bitmap map, Vector2D p)
+        public static bool IsGoal(this Color c)
         {
-            return map.GetPixel(p.x, p.y).IsTheColorSameAs(Color.Red);
-        }
-
-        public static bool IsEmptySpace(this Bitmap map, Vector2D p)
-        {
-            return map.GetPixel(p.x, p.y).IsTheColorSameAs(Color.White);
+            return c.R > 220 && c.G < 32 && c.B < 32;
         }
     }
 }
