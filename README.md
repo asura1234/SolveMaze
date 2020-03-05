@@ -9,6 +9,7 @@ This coding challenge is part of the interview process for the Mobile Developer 
 When I first saw the problem, I immediately thought of the path-finding problem in video game AI. And I recalled A-Star search Algorithm as being one of the most widely used solution. So I googled "A-Star Algorithm" and found the Wikipedia page with pseudocode describing it (https://en.wikipedia.org/wiki/A*_search_algorithm). Then I went about implementing it on my own.
 
 ## Result
+The solution works with very complex maze. 
 ![](Resources/maze2_solved.png)
 The solution works even when the maze is not orthogonal.
 ![](Resources/maze3_solved.png)
