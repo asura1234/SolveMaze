@@ -8,7 +8,7 @@ This coding challenge is part of the interview process for the Mobile Developer 
 ## Implementation
 When I first saw the problem, I immediately thought of the path-finding problem in video game AI. And I recalled A-Star search Algorithm as being one of the most widely used solution. So I googled "A-Star Algorithm" and found the Wikipedia page with pseudocode describing it (https://en.wikipedia.org/wiki/A*_search_algorithm). Then I went about implementing it on my own.
 
-To run the program:
+To run the program, you will need the source image name and destionation image name as arguments.
 maze.exe “source.[bmp,png,jpg]” “destination.[bmp,png,jpg]”
 
 ## Result
